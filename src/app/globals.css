@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0d0d14;
+  --foreground: #f1f5f9;
+}
+
+* {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  min-height: 100vh;
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+  background: radial-gradient(ellipse at top, #1a1a2e 0%, #0d0d14 60%);
+}
