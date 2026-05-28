@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,13 +12,71 @@ enum Role {
   OFFICER
 }
 
+enum MonthlySaleStatus {
+  DRAFT
+  SUBMITTED
+}
+
 model User {
-  id         String   @id @default(cuid())
-  authId     String   @unique
-  email      String   @unique
-  fullName   String?
-  role       Role     @default(OFFICER)
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String        @id @default(cuid())
+  authId       String        @unique
+  email        String        @unique
+  fullName     String?
+  role         Role          @default(OFFICER)
+  isActive     Boolean       @default(true)
+  monthlySales MonthlySale[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model CarModel {
+  id          String            @id @default(cuid())
+  name        String
+  imageUrl    String
+  description String?
+  isActive    Boolean           @default(true)
+  sortOrder   Int               @default(0)
+  saleItems   MonthlySaleItem[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+}
+
+model IncentiveSlab {
+  id            String   @id @default(cuid())
+  minUnits      Int
+  maxUnits      Int?
+  perUnitAmount Decimal  @db.Decimal(10, 2)
+  label         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MonthlySale {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  monthKey       String
+  status         MonthlySaleStatus @default(DRAFT)
+  submittedAt    DateTime?
+  totalUnits     Int               @default(0)
+  totalIncentive Decimal           @default(0) @db.Decimal(12, 2)
+  items          MonthlySaleItem[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([userId, monthKey])
+}
+
+model MonthlySaleItem {
+  id         String     @id @default(cuid())
+  monthlyId  String
+  monthly    MonthlySale @relation(fields: [monthlyId], references: [id], onDelete: Cascade)
+  carModelId String
+  carModel   CarModel   @relation(fields: [carModelId], references: [id])
+  units      Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([monthlyId, carModelId])
 }
