@@ -3,7 +3,6 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import type { NavItem } from "@/components/layout/nav-config";
-import { cn } from "@/lib/utils";
 import { useEffect, useState, type ReactNode } from "react";
 
 type PageShellProps = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { isNavItemActive, type NavItem } from "@/components/layout/nav-config";
+import { NavIcon } from "@/components/layout/nav-icons";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -26,7 +27,6 @@ export function Sidebar({ portalLabel, navItems, onNavigate, className }: Sideba
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => {
           const active = isNavItemActive(pathname, item);
-          const Icon = item.icon;
 
           return (
             <Link
@@ -40,7 +40,7 @@ export function Sidebar({ portalLabel, navItems, onNavigate, className }: Sideba
                   : "text-slate-600 hover:bg-white/40 hover:text-slate-900",
               )}
             >
-              <Icon size={18} className={active ? "text-blue-600" : "text-slate-500"} />
+              <NavIcon name={item.icon} className={active ? "text-blue-600" : "text-slate-500"} />
               {item.label}
             </Link>
           );

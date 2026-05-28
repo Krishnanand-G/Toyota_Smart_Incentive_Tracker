@@ -1,5 +1,6 @@
 "use client";
 
+import { GlassCard, GlassInput } from "@/components/glass";
 import { FormEvent, useState } from "react";
 import { LoaderCircle, LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
@@ -46,54 +47,46 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-[20px] border border-white/15 bg-white/10 p-8 shadow-2xl backdrop-blur-2xl">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Toyota Incentive Tracker</h1>
-        <p className="mt-2 text-sm text-slate-300/80">Sign in to continue to your role dashboard.</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="ambient-blob -left-20 top-10 h-72 w-72 bg-violet-300/35" />
+        <div className="ambient-blob right-0 top-20 h-80 w-80 bg-sky-200/40" />
+        <div className="ambient-blob bottom-0 left-1/4 h-64 w-64 bg-emerald-200/30" />
+      </div>
+
+      <GlassCard variant="elevated" className="w-full max-w-md p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Toyota Incentive Tracker</h1>
+        <p className="mt-2 text-sm text-slate-500">Sign in to continue to your role dashboard.</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm text-slate-200">
+            <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">
               Email
             </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none"
-              placeholder="you@toyota.com"
-            />
+            <GlassInput id="email" name="email" type="email" required placeholder="you@toyota.com" />
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-2 block text-sm text-slate-200">
+            <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none"
-              placeholder="Enter your password"
-            />
+            <GlassInput id="password" name="password" type="password" required placeholder="Enter your password" />
           </div>
 
           {status.type === "error" && (
-            <p className="rounded-lg border border-red-400/40 bg-red-500/15 px-3 py-2 text-sm text-red-200">{status.message}</p>
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{status.message}</p>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? <LoaderCircle size={18} className="animate-spin" /> : <LogIn size={18} />}
             {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-      </section>
+      </GlassCard>
     </main>
   );
 }

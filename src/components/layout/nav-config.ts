@@ -1,21 +1,21 @@
-import { Car, History, LayoutDashboard, Layers, Users, type LucideIcon } from "lucide-react";
+export type NavIconName = "car" | "layers" | "users" | "dashboard" | "history";
 
 export type NavItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: NavIconName;
   match?: "exact" | "prefix";
 };
 
 export const adminNavItems: NavItem[] = [
-  { href: "/admin/cars", label: "Cars", icon: Car, match: "prefix" },
-  { href: "/admin/slabs", label: "Slabs", icon: Layers, match: "prefix" },
-  { href: "/admin/officers", label: "Officers", icon: Users, match: "prefix" },
+  { href: "/admin/cars", label: "Cars", icon: "car", match: "prefix" },
+  { href: "/admin/slabs", label: "Slabs", icon: "layers", match: "prefix" },
+  { href: "/admin/officers", label: "Officers", icon: "users", match: "prefix" },
 ];
 
 export const officerNavItems: NavItem[] = [
-  { href: "/officer", label: "Dashboard", icon: LayoutDashboard, match: "exact" },
-  { href: "/officer/history", label: "History", icon: History, match: "prefix" },
+  { href: "/officer", label: "Dashboard", icon: "dashboard", match: "exact" },
+  { href: "/officer/history", label: "History", icon: "history", match: "prefix" },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {
