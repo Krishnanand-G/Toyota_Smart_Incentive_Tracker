@@ -3,17 +3,68 @@
 @tailwind utilities;
 
 :root {
-  --background: #0d0d14;
-  --foreground: #f1f5f9;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --glass-base: rgba(255, 255, 255, 0.45);
+  --glass-elevated: rgba(255, 255, 255, 0.58);
+  --glass-pill: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-border-strong: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+  --glass-shadow-elevated: 0 12px 40px rgba(31, 38, 135, 0.12);
+  --text-muted: rgba(15, 23, 42, 0.55);
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
 }
 
 * {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 body {
   min-height: 100vh;
   color: var(--foreground);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
-  background: radial-gradient(ellipse at top, #1a1a2e 0%, #0d0d14 60%);
+  background: linear-gradient(165deg, #f8fafc 0%, #eef2ff 45%, #f1f5f9 100%);
+}
+
+@layer components {
+  .glass-base {
+    background: var(--glass-base);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-elevated {
+    background: var(--glass-elevated);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--glass-shadow-elevated);
+  }
+
+  .glass-pill {
+    background: var(--glass-pill);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .ambient-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    pointer-events: none;
+  }
 }
