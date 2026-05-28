@@ -1,18 +1,27 @@
 # Toyota Smart Incentive Tracker
 
-Stage 1 foundation for a Toyota incentive tracking application with role-based authentication.
+Production-style Toyota incentive tracking app with role-based auth, admin tools, slab engine, officer sales workflow, and history views.
 
 ## Stack
 
 - Next.js 14 (App Router) + TypeScript
-- Tailwind CSS
+- Tailwind CSS + custom light Liquid Glass design system
 - Supabase Auth (`@supabase/ssr`)
 - Prisma ORM + PostgreSQL
 
+## Features
+
+- Secure role routing for `ADMIN` and `OFFICER`
+- Admin car catalog CRUD with soft-delete and image preview
+- Admin slab editor with validation and live payout preview
+- Officer monthly sales dashboard with draft/save/submit flow
+- Officer/admin history APIs and history views
+- Officers management list + create-officer flow
+
 ## Environment Setup
 
-1. Copy `.env.example` to `.env`.
-2. Fill in:
+1. Copy `.env.example` to `.env`
+2. Set:
    - `DATABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -21,29 +30,32 @@ Stage 1 foundation for a Toyota incentive tracking application with role-based a
 
 ```bash
 npm install
+npm run prisma:migrate
 npm run prisma:generate
+npm run prisma:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The root route redirects to `/login`.
+App starts at [http://localhost:3000](http://localhost:3000).
 
-## Prisma Notes
+## Demo Accounts (Seed Data)
 
-- Schema is defined in `prisma/schema.prisma`.
-- Seed script is `prisma/seed.ts`.
-- Useful commands:
+- Admin: `admin@toyota.local`
+- Officer: `officer@toyota.local`
+- Passwords must exist in your Supabase project auth users to match these emails/auth IDs.
+
+## Deployment Checklist (Vercel)
+
+- Add all `.env` keys in Vercel Project Settings
+- Run migrations against production database before first deploy
+- Ensure Supabase URL/Anon key belong to the same environment
+- Redeploy after seed or schema changes
+
+## Useful Commands
 
 ```bash
+npm run lint
+npm run build
 npm run prisma:migrate
 npm run prisma:seed
 ```
-
-## Stage 1 Coverage
-
-- Glass-style `/login` page with Supabase email/password sign-in
-- `/api/me` route for authenticated role/profile lookup
-- Protected `/admin` and `/officer` routes
-- Middleware redirects:
-  - signed-out users to `/login`
-  - signed-in users away from `/login` to role dashboard
-  - cross-role access attempts to the correct role area
