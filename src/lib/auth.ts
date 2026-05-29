@@ -20,7 +20,7 @@ export async function getAuthProfile() {
 
   if (error || !user) return null;
 
-  const profile = await prisma.user.findUnique({
+  let profile = await prisma.user.findUnique({
     where: { authId: user.id },
     select: {
       id: true,
@@ -28,10 +28,48 @@ export async function getAuthProfile() {
       email: true,
       fullName: true,
       role: true,
+      isActive: true,
     },
   });
 
-  return profile;
+  if (profile) {
+    if (!profile.isActive) return null;
+    return profile;
+  }
+
+  const normalizedEmail = user.email?.toLowerCase();
+  if (!normalizedEmail) return null;
+
+  // Recover from local seed/supabase mismatch by linking known email to current auth id.
+  profile = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: {
+      id: true,
+      authId: true,
+      email: true,
+      fullName: true,
+      role: true,
+      isActive: true,
+    },
+  });
+
+  if (!profile || !profile.isActive) return null;
+
+  const linked = await prisma.user.update({
+    where: { id: profile.id },
+    data: { authId: user.id },
+    select: {
+      id: true,
+      authId: true,
+      email: true,
+      fullName: true,
+      role: true,
+      isActive: true,
+    },
+  });
+
+  if (!linked.isActive) return null;
+  return linked;
 }
 
 export async function requireAuth() {

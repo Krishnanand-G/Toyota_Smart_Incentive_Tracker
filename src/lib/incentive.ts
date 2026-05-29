@@ -1,4 +1,4 @@
-import type { IncentiveSlab } from "@prisma/client";
+import type { SlabShape } from "@/lib/incentive-types";
 
 export type IncentiveResult = {
   totalUnits: number;
@@ -8,7 +8,7 @@ export type IncentiveResult = {
   nextTierDeltaUnits: number | null;
 };
 
-export function calculateIncentive(totalUnits: number, slabs: IncentiveSlab[]): IncentiveResult {
+export function calculateIncentive(totalUnits: number, slabs: SlabShape[]): IncentiveResult {
   const ordered = [...slabs].sort((a, b) => a.minUnits - b.minUnits);
   const current =
     ordered.find((slab) => totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits)) ??

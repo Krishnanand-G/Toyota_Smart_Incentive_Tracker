@@ -1,6 +1,7 @@
 "use client";
 
-import { GlassBadge, GlassCard } from "@/components/glass";
+import { GlassAlert, GlassBadge, GlassCard, GlassSkeleton, PageHeader } from "@/components/glass";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 type HistoryRow = {
@@ -36,29 +37,43 @@ export default function OfficerHistoryPage() {
   }, []);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <GlassBadge>Stage 6</GlassBadge>
-        <p className="text-sm text-slate-600">View monthly submission history and payout totals.</p>
-      </div>
-      {loading ? <p className="text-sm text-slate-500">Loading history...</p> : null}
-      {error ? <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {!loading && !rows.length ? <GlassCard className="p-6 text-sm text-slate-600">No history yet.</GlassCard> : null}
+    <div className="space-y-6">
+      <PageHeader
+        badge="History"
+        description="Review monthly submission history and payout totals."
+      />
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <GlassSkeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      ) : null}
+      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
+      {!loading && !rows.length && !error ? (
+        <GlassCard className="p-6 text-sm text-muted">No history yet.</GlassCard>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-3">
         {rows.map((row) => (
-          <GlassCard key={row.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{row.monthKey}</p>
-              <p className="text-xs text-slate-500">
-                {row.submittedAt ? `Submitted ${new Date(row.submittedAt).toLocaleDateString()}` : "Draft"}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <GlassBadge variant={row.status === "SUBMITTED" ? "green" : "amber"}>{row.status}</GlassBadge>
-              <p className="text-sm text-slate-700">{row.totalUnits} units</p>
-              <p className="text-sm font-semibold text-blue-700">{Number(row.totalIncentive).toLocaleString()}</p>
-            </div>
-          </GlassCard>
+          <motion.div key={row.id} whileHover={{ scale: 1.005 }} transition={{ duration: 0.2 }}>
+            <GlassCard className="flex flex-wrap items-center justify-between gap-3 border border-white/10 p-4 hover:border-white/20">
+              <div>
+                <p className="font-mono text-sm font-semibold text-foreground">{row.monthKey}</p>
+                <p className="text-xs text-muted">
+                  {row.submittedAt ? `Submitted ${new Date(row.submittedAt).toLocaleDateString()}` : "Draft"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <GlassBadge variant={row.status === "SUBMITTED" ? "green" : "amber"}>{row.status}</GlassBadge>
+                <p className="font-mono text-sm text-muted">{row.totalUnits} units</p>
+                <p className="font-mono text-sm font-semibold text-orange-400">
+                  ₹{Number(row.totalIncentive).toLocaleString()}
+                </p>
+              </div>
+            </GlassCard>
+          </motion.div>
         ))}
       </div>
     </div>

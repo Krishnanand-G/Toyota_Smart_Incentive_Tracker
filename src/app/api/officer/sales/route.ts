@@ -33,6 +33,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     sale,
     cars,
+    slabs,
     payout,
     submitted: sale?.status === "SUBMITTED",
   });

@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassAlert, GlassButton } from "@/components/glass";
+
 export default function OfficerError({
   error,
   reset,
@@ -8,16 +10,14 @@ export default function OfficerError({
   reset: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-      <p className="text-sm font-medium text-red-700">Something went wrong in officer area.</p>
-      <p className="mt-1 text-xs text-red-600">{error.message}</p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-3 rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white"
-      >
+    <div className="space-y-3">
+      <GlassAlert variant="error">
+        <p className="font-medium">Something went wrong in officer area.</p>
+        <p className="mt-1 text-xs opacity-90">{error.message}</p>
+      </GlassAlert>
+      <GlassButton type="button" variant="secondary" onClick={reset}>
         Retry
-      </button>
+      </GlassButton>
     </div>
   );
 }
