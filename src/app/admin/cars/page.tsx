@@ -1,6 +1,17 @@
 "use client";
 
-import { GlassBadge, GlassCard, GlassInput, GlassModal } from "@/components/glass";
+import {
+  GlassAlert,
+  GlassBadge,
+  GlassButton,
+  GlassCard,
+  GlassInput,
+  GlassModal,
+  GlassSkeleton,
+  PageHeader,
+} from "@/components/glass";
+import { ConfirmDialog } from "@/components/incentive";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -18,9 +29,11 @@ export default function AdminCarsPage() {
   const [cars, setCars] = useState<CarModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CarModel | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function loadCars() {
     setLoading(true);
@@ -46,6 +59,7 @@ export default function AdminCarsPage() {
   function startCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setFormError(null);
     setOpen(true);
   }
 
@@ -57,11 +71,13 @@ export default function AdminCarsPage() {
       description: car.description ?? "",
       sortOrder: car.sortOrder,
     });
+    setFormError(null);
     setOpen(true);
   }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    setFormError(null);
     const payload = {
       ...form,
       sortOrder: Number(form.sortOrder),
@@ -77,7 +93,7 @@ export default function AdminCarsPage() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data?.error?.formErrors?.[0] ?? "Could not save car");
+      setFormError(data?.error?.formErrors?.[0] ?? "Could not save car");
       return;
     }
 
@@ -86,102 +102,95 @@ export default function AdminCarsPage() {
   }
 
   async function removeCar(id: string) {
-    const ok = window.confirm("Soft-delete this car model?");
-    if (!ok) return;
     const res = await fetch(`/api/admin/cars/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      alert("Could not delete car model");
+      setError("Could not delete car model");
       return;
     }
+    setDeleteId(null);
     await loadCars();
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <GlassBadge variant="blue">Stage 3</GlassBadge>
-          <p className="text-sm text-slate-600">Manage Toyota models shown to officers.</p>
-        </div>
-        <button
-          type="button"
-          onClick={startCreate}
-          className="glass-pill rounded-full px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white/70"
-        >
-          Add model
-        </button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        badge="Inventory"
+        description="Maintain showroom lineup for officer submissions."
+        actions={
+          <div className="flex items-center gap-4">
+            <div className="glass-section px-4 py-2 text-center">
+              <p className="font-mono text-xl font-semibold text-foreground">{cars.length}</p>
+              <p className="text-xs text-muted">Active models</p>
+            </div>
+            <GlassButton type="button" variant="accent" onClick={startCreate}>
+              Add model
+            </GlassButton>
+          </div>
+        }
+      />
 
-      {loading && <p className="text-sm text-slate-500">Loading car models...</p>}
-      {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {!loading && !cars.length && !error && (
-        <GlassCard className="p-6 text-sm text-slate-600">No car models yet. Add your first model.</GlassCard>
-      )}
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <GlassSkeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      ) : null}
+      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
+      {!loading && !cars.length && !error ? (
+        <GlassCard className="p-8 text-sm text-muted">No car models yet. Add your first model to begin.</GlassCard>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cars.map((car) => (
-          <GlassCard key={car.id} className="overflow-hidden p-3 transition duration-200 hover:-translate-y-0.5">
-            <Image
-              src={car.imageUrl}
-              alt={car.name}
-              width={640}
-              height={320}
-              className="h-44 w-full rounded-xl object-cover"
-            />
-            <div className="mt-3 space-y-2 px-1 pb-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-base font-semibold text-slate-900">{car.name}</h3>
-                <GlassBadge>{`#${car.sortOrder}`}</GlassBadge>
+          <motion.div key={car.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+            <GlassCard className="overflow-hidden border border-white/10 p-3 transition hover:border-white/20">
+              <Image
+                src={car.imageUrl}
+                alt={car.name}
+                width={640}
+                height={320}
+                className="h-44 w-full rounded-xl object-cover"
+              />
+              <div className="mt-3 space-y-2 px-1 pb-1">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-base font-semibold text-foreground">{car.name}</h3>
+                  <GlassBadge>{`#${car.sortOrder}`}</GlassBadge>
+                </div>
+                <p className="min-h-10 text-sm leading-relaxed text-muted">
+                  {car.description || "No description added yet."}
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <GlassButton type="button" variant="secondary" className="!px-3 !py-1.5 !text-xs" onClick={() => startEdit(car)}>
+                    Edit
+                  </GlassButton>
+                  <GlassButton type="button" variant="danger" className="!px-3 !py-1.5 !text-xs" onClick={() => setDeleteId(car.id)}>
+                    Remove
+                  </GlassButton>
+                </div>
               </div>
-              <p className="min-h-10 text-sm text-slate-600">{car.description || "No description"}</p>
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => startEdit(car)}
-                  className="glass-pill rounded-full px-3 py-1.5 text-xs font-medium text-slate-700"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeCar(car.id)}
-                  className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
+          </motion.div>
         ))}
       </div>
 
       <GlassModal open={open} onClose={() => setOpen(false)} title={editing ? "Edit car model" : "Add car model"}>
         <form onSubmit={onSubmit} className="space-y-3">
+          {formError ? <GlassAlert variant="error">{formError}</GlassAlert> : null}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Model Name</label>
-            <GlassInput
-              value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              required
-            />
+            <label className="mb-1.5 block text-sm text-muted">Model Name</label>
+            <GlassInput value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} required />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Image URL</label>
-            <GlassInput
-              value={form.imageUrl}
-              onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-              required
-            />
+            <label className="mb-1.5 block text-sm text-muted">Image URL</label>
+            <GlassInput value={form.imageUrl} onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))} required />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Description</label>
-            <GlassInput
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-            />
+            <label className="mb-1.5 block text-sm text-muted">Description</label>
+            <GlassInput value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Sort Order</label>
+            <label className="mb-1.5 block text-sm text-muted">Sort Order</label>
             <GlassInput
               type="number"
               min={0}
@@ -190,24 +199,28 @@ export default function AdminCarsPage() {
             />
           </div>
           {form.imageUrl ? (
-            <Image
-              src={form.imageUrl}
-              alt="Preview"
-              width={640}
-              height={260}
-              className="h-40 w-full rounded-xl object-cover"
-            />
+            <Image src={form.imageUrl} alt="Preview" width={640} height={260} className="h-40 w-full rounded-xl object-cover" />
           ) : null}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setOpen(false)} className="glass-pill rounded-full px-4 py-2 text-sm">
+            <GlassButton type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
-            </button>
-            <button type="submit" className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white">
+            </GlassButton>
+            <GlassButton type="submit" variant="accent">
               {submitLabel}
-            </button>
+            </GlassButton>
           </div>
         </form>
       </GlassModal>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Remove car model?"
+        message="This soft-deletes the model from the officer dashboard."
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => deleteId && removeCar(deleteId)}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

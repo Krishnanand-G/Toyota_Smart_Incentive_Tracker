@@ -1,6 +1,15 @@
 "use client";
 
-import { GlassBadge, GlassCard, GlassInput, GlassModal } from "@/components/glass";
+import {
+  GlassAlert,
+  GlassBadge,
+  GlassButton,
+  GlassCard,
+  GlassInput,
+  GlassModal,
+  GlassSkeleton,
+  PageHeader,
+} from "@/components/glass";
 import { useEffect, useState } from "react";
 
 type Officer = {
@@ -24,6 +33,7 @@ export default function AdminOfficersPage() {
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -60,6 +70,7 @@ export default function AdminOfficersPage() {
 
   async function createOfficer(event: React.FormEvent) {
     event.preventDefault();
+    setFormError(null);
     const res = await fetch("/api/admin/officers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,7 +78,7 @@ export default function AdminOfficersPage() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data?.error?.formErrors?.[0] ?? "Could not create officer");
+      setFormError(data?.error?.formErrors?.[0] ?? "Could not create officer");
       return;
     }
     setOpen(false);
@@ -77,99 +88,119 @@ export default function AdminOfficersPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <GlassBadge variant="green">Stage 6</GlassBadge>
-          <p className="text-sm text-slate-600">Manage officers and submission activity.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Create officer
-        </button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        badge="Officer Ops"
+        badgeVariant="green"
+        description="Manage officers and submission activity."
+        actions={
+          <GlassButton type="button" variant="accent" onClick={() => setOpen(true)}>
+            Create officer
+          </GlassButton>
+        }
+      />
 
-      {loading ? <p className="text-sm text-slate-500">Loading officers...</p> : null}
-      {error ? <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {[1, 2].map((i) => (
+            <GlassSkeleton key={i} className="h-32 w-full" />
+          ))}
+        </div>
+      ) : null}
+      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
       {!loading && !officers.length && !error ? (
-        <GlassCard className="p-6 text-sm text-slate-600">No officers found.</GlassCard>
+        <GlassCard className="p-6 text-sm text-muted">No officers found.</GlassCard>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {officers.map((officer) => (
           <GlassCard
             key={officer.id}
-            className={`space-y-2 p-4 ${selectedOfficerId === officer.id ? "ring-2 ring-blue-300/60" : ""}`}
+            className={`space-y-2 border p-4 transition ${
+              selectedOfficerId === officer.id
+                ? "border-orange-500/50 ring-1 ring-orange-500/30"
+                : "border-white/10 hover:border-white/20"
+            }`}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-slate-900">{officer.fullName || "Unnamed Officer"}</h3>
+              <h3 className="text-base font-semibold text-foreground">{officer.fullName || "Unnamed Officer"}</h3>
               <GlassBadge variant={officer.submissions > 0 ? "blue" : "default"}>
-                {officer.submissions > 0 ? `${officer.submissions} submissions` : "No submissions yet"}
+                {officer.submissions > 0 ? `${officer.submissions} submissions` : "No submissions"}
               </GlassBadge>
             </div>
-            <p className="text-sm text-slate-600">{officer.email}</p>
-            <p className="text-xs text-slate-500">Latest month: {officer.latestMonth ?? "N/A"}</p>
-            <button
+            <p className="text-sm text-muted">{officer.email}</p>
+            <p className="text-xs text-muted">Latest month: {officer.latestMonth ?? "N/A"}</p>
+            <GlassButton
               type="button"
-              className="glass-pill rounded-full px-3 py-1.5 text-xs font-medium text-slate-700"
+              variant="secondary"
+              className="!px-3 !py-1.5 !text-xs"
               onClick={() => setSelectedOfficerId(officer.id)}
             >
               View history
-            </button>
+            </GlassButton>
           </GlassCard>
         ))}
       </div>
 
       {selectedOfficerId ? (
-        <GlassCard className="space-y-3 p-4">
+        <GlassCard className="space-y-3 border border-white/10 p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Officer submission history</h3>
-            <button
-              type="button"
-              onClick={() => setSelectedOfficerId(null)}
-              className="text-xs text-slate-500 underline"
-            >
+            <h3 className="text-sm font-semibold text-foreground">Submission history</h3>
+            <button type="button" onClick={() => setSelectedOfficerId(null)} className="text-xs text-muted hover:text-foreground">
               Close
             </button>
           </div>
           {!historyRows.length ? (
-            <p className="text-sm text-slate-500">No submission history.</p>
+            <p className="text-sm text-muted">No submission history.</p>
           ) : (
-            historyRows.map((row) => (
-              <div key={row.id} className="rounded-xl border border-white/70 bg-white/50 p-3 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-slate-800">{row.monthKey}</p>
-                  <GlassBadge variant={row.status === "SUBMITTED" ? "green" : "amber"}>{row.status}</GlassBadge>
-                </div>
-                <p className="text-slate-600">
-                  {row.totalUnits} units - {Number(row.totalIncentive).toLocaleString()} payout
-                </p>
-              </div>
-            ))
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[400px] text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-left text-muted">
+                    <th className="px-2 py-2">Month</th>
+                    <th className="px-2 py-2">Status</th>
+                    <th className="px-2 py-2">Units</th>
+                    <th className="px-2 py-2">Payout</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyRows.map((row) => (
+                    <tr key={row.id} className="border-b border-white/5">
+                      <td className="px-2 py-2 text-foreground">{row.monthKey}</td>
+                      <td className="px-2 py-2">
+                        <GlassBadge variant={row.status === "SUBMITTED" ? "green" : "amber"}>{row.status}</GlassBadge>
+                      </td>
+                      <td className="px-2 py-2 font-mono text-muted">{row.totalUnits}</td>
+                      <td className="px-2 py-2 font-mono font-semibold text-orange-400">
+                        ₹{Number(row.totalIncentive).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </GlassCard>
       ) : null}
 
       <GlassModal open={open} onClose={() => setOpen(false)} title="Create officer">
         <form onSubmit={createOfficer} className="space-y-3">
+          {formError ? <GlassAlert variant="error">{formError}</GlassAlert> : null}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Full name</label>
+            <label className="mb-1.5 block text-sm text-muted">Full name</label>
             <GlassInput value={fullName} onChange={(e) => setFullName(e.target.value)} required />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-1.5 block text-sm text-muted">Email</label>
             <GlassInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          <p className="text-xs text-slate-500">
-            Note: this local flow creates the Prisma user row. Connect Supabase Admin API for invite/password provisioning.
+          <p className="text-xs text-muted">
+            Creates the Prisma user row. Add matching credentials in Supabase Auth for sign-in.
           </p>
           <div className="flex justify-end">
-            <button type="submit" className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white">
+            <GlassButton type="submit" variant="accent">
               Create
-            </button>
+            </GlassButton>
           </div>
         </form>
       </GlassModal>
