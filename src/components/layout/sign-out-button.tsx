@@ -26,7 +26,7 @@ export function SignOutButton({ className, compact = false }: SignOutButtonProps
       onClick={handleSignOut}
       disabled={isSigningOut}
       className={cn(
-        "glass-pill inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-slate-700 transition hover:text-slate-900 disabled:opacity-60",
+        "glass-pill inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground disabled:opacity-60",
         className,
       )}
     >

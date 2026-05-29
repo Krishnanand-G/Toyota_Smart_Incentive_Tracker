@@ -19,12 +19,16 @@ function titleFromPath(pathname: string, navItems: NavItem[]) {
 export function PortalLayout({ portalLabel, navItems, children }: PortalLayoutProps) {
   const pathname = usePathname();
   const pageTitle = titleFromPath(pathname, navItems);
+  const subtitle =
+    portalLabel === "Admin Portal"
+      ? "Configure inventory, slabs, and officer performance."
+      : "Track sales monthly and monitor incentive payout.";
 
   return (
     <PageShell
       portalLabel={portalLabel}
       pageTitle={pageTitle}
-      pageSubtitle={`${portalLabel} workspace`}
+      pageSubtitle={subtitle}
       navItems={navItems}
     >
       {children}
