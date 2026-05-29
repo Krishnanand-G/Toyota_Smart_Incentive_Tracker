@@ -8,11 +8,11 @@ export type GlassBadgeProps = HTMLAttributes<HTMLSpanElement> & {
 };
 
 const variantClasses: Record<GlassBadgeVariant, string> = {
-  default: "glass-pill text-slate-700",
-  blue: "bg-blue-500/15 text-blue-700 border border-blue-200/60",
-  green: "bg-emerald-500/15 text-emerald-700 border border-emerald-200/60",
-  amber: "bg-amber-500/15 text-amber-800 border border-amber-200/60",
-  red: "bg-red-500/15 text-red-700 border border-red-200/60",
+  default: "glass-pill text-muted",
+  blue: "bg-orange-500/15 text-orange-400 border border-orange-500/25",
+  green: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+  amber: "bg-amber-500/15 text-amber-400 border border-amber-500/25",
+  red: "bg-red-500/15 text-red-400 border border-red-500/25",
 };
 
 export function GlassBadge({ variant = "default", className, ...props }: GlassBadgeProps) {

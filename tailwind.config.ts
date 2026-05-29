@@ -5,6 +5,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        muted: "var(--text-muted)",
         glass: {
           base: "var(--glass-base)",
           elevated: "var(--glass-elevated)",
@@ -17,8 +20,12 @@ const config: Config = {
           red: "var(--accent-red)",
         },
       },
+      fontFamily: {
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
+      },
       borderRadius: {
-        glass: "20px",
+        glass: "12px",
       },
       boxShadow: {
         glass: "var(--glass-shadow)",

@@ -11,8 +11,7 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(function
     <input
       ref={ref}
       className={cn(
-        "glass-input w-full rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400",
-        "focus:border-accent-blue/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/40",
+        "glass-input w-full rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted",
         className,
       )}
       {...props}

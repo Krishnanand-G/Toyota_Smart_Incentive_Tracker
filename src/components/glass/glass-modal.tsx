@@ -36,16 +36,16 @@ export function GlassModal({ open, onClose, title, children, className }: GlassM
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       <GlassCard variant="elevated" className={cn("relative z-10 w-full max-w-lg p-6", className)} role="dialog">
         <div className="mb-4 flex items-start justify-between gap-4">
-          {title ? <h2 className="text-lg font-semibold text-slate-900">{title}</h2> : <span />}
+          {title ? <h2 className="text-lg font-semibold text-foreground">{title}</h2> : <span />}
           <button
             type="button"
             onClick={onClose}
-            className="glass-pill rounded-full p-1.5 text-slate-600 transition hover:text-slate-900"
+            className="glass-pill rounded-full p-1.5 text-muted transition hover:text-foreground"
             aria-label="Close"
           >
             <X size={18} />
