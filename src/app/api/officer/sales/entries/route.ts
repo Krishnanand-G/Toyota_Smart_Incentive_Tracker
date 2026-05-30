@@ -1,7 +1,9 @@
 import { Role } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { calculateIncentive, getSlabIndex } from "@/lib/incentive";
+import { getIncentiveSlabShapes } from "@/lib/incentive-slabs";
 import { prisma } from "@/lib/prisma";
 import {
   monthBoundsUtc,
@@ -52,13 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid or inactive car model" }, { status: 400 });
   }
 
-  const slabs = await prisma.incentiveSlab.findMany({ orderBy: { minUnits: "asc" } });
-  const slabShapes = slabs.map((slab) => ({
-    minUnits: slab.minUnits,
-    maxUnits: slab.maxUnits,
-    perUnitAmount: Number(slab.perUnitAmount),
-    label: slab.label,
-  }));
+  const slabShapes = await getIncentiveSlabShapes();
 
   const { start, end } = monthBoundsUtc(entryMonthKey);
   const previousCount = await prisma.saleEntry.count({
@@ -85,6 +81,11 @@ export async function POST(request: Request) {
   const newTierIndex = getSlabIndex(newCount, slabShapes);
   const payout = calculateIncentive(newCount, slabShapes);
   const tierUnlocked = newTierIndex > previousTierIndex && newTierIndex > 0;
+
+  revalidateTag("admin-dashboard");
+  revalidateTag("officer-dashboard");
+  revalidateTag(`officer-${auth.profile.id}`);
+  revalidateTag("sale-entries");
 
   return NextResponse.json({
     entry: {

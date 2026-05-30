@@ -1,0 +1,172 @@
+"use client";
+
+import { GlassAlert, GlassMonthPicker, GlassSkeleton, PageHeader } from "@/components/glass";
+import { CelebrationDialog } from "@/components/incentive";
+import { LogSaleModal } from "@/components/officer/log-sale-modal";
+import { MetricStrip } from "@/components/officer/metric-strip";
+import { RecentSalesList } from "@/components/officer/recent-sales-list";
+import type { PayoutResult } from "@/lib/incentive-types";
+import type { SlabShape } from "@/lib/incentive-types";
+import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const ProgressChart = dynamic(
+  () => import("@/components/officer/progress-chart").then((mod) => mod.ProgressChart),
+  { loading: () => <GlassSkeleton className="h-64 w-full" /> },
+);
+
+const LiveTracker = dynamic(
+  () => import("@/components/incentive/live-tracker").then((mod) => mod.LiveTracker),
+  { loading: () => <GlassSkeleton className="h-40 w-full" /> },
+);
+
+const TierLadder = dynamic(
+  () => import("@/components/incentive/tier-ladder").then((mod) => mod.TierLadder),
+  { loading: () => <GlassSkeleton className="h-48 w-full" /> },
+);
+
+export type OfficerDashboardData = {
+  monthKey: string;
+  cars: { id: string; name: string; imageUrl: string }[];
+  slabs: SlabShape[];
+  entries: { id: string; carName: string; carImageUrl: string; soldAt: string }[];
+  totalUnits: number;
+  payout: PayoutResult;
+  chartSeries: { date: string; cumulativeUnits: number }[];
+};
+
+type OfficerDashboardClientProps = {
+  initialData: OfficerDashboardData;
+  initialMonthKey: string;
+};
+
+export function OfficerDashboardClient({ initialData, initialMonthKey }: OfficerDashboardClientProps) {
+  const [monthKey, setMonthKey] = useState(initialMonthKey);
+  const [data, setData] = useState(initialData);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const skipInitialFetch = useRef(true);
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [saleSuccessOpen, setSaleSuccessOpen] = useState(false);
+  const [tierCelebrationOpen, setTierCelebrationOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
+  const [tierMessage, setTierMessage] = useState({ title: "", message: "" });
+
+  const loadDashboard = useCallback(async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/officer/dashboard?month=${monthKey}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load dashboard");
+      setData((await res.json()) as OfficerDashboardData);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load dashboard");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [monthKey]);
+
+  useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      if (monthKey === initialMonthKey) return;
+    }
+    void loadDashboard();
+  }, [monthKey, loadDashboard, initialMonthKey]);
+
+  function handleSaleSuccess(result: {
+    entry: { carName: string; soldAt: string };
+    tierUnlocked: boolean;
+    tierLabel: string | null;
+    payout: { slabLabel: string; perUnitAmount: number; totalPayout: number };
+  }) {
+    const soldDate = new Date(result.entry.soldAt).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    setSuccessMessage({
+      title: "Sale logged",
+      message: `Recorded ${result.entry.carName} sold on ${soldDate}.`,
+    });
+    setSaleSuccessOpen(true);
+
+    if (result.tierUnlocked && result.tierLabel) {
+      setTierMessage({
+        title: `New tier: ${result.tierLabel}`,
+        message: `You're now earning ₹${result.payout.perUnitAmount.toLocaleString()} per unit. Estimated payout: ₹${result.payout.totalPayout.toLocaleString()}.`,
+      });
+    } else {
+      setTierMessage({ title: "", message: "" });
+    }
+
+    void loadDashboard();
+  }
+
+  function closeSaleSuccess() {
+    setSaleSuccessOpen(false);
+    if (tierMessage.title) {
+      setTierCelebrationOpen(true);
+    }
+  }
+
+  function closeTierCelebration() {
+    setTierCelebrationOpen(false);
+    setTierMessage({ title: "", message: "" });
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        badge="Studio dashboard"
+        description="Track monthly progress and log individual car sales."
+        actions={<GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />}
+      />
+
+      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
+
+      <div className={cn("space-y-6", refreshing && "opacity-80 transition-opacity")}>
+        {refreshing ? <p className="text-xs text-muted">Updating…</p> : null}
+        <MetricStrip payout={data.payout} />
+        <ProgressChart data={data.chartSeries} monthKey={data.monthKey} />
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <RecentSalesList entries={data.entries} onLogSale={() => setLogModalOpen(true)} />
+          </div>
+          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+            <LiveTracker payout={data.payout} />
+            {data.slabs.length > 0 ? (
+              <TierLadder slabs={data.slabs} totalUnits={data.totalUnits} />
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <LogSaleModal
+        open={logModalOpen}
+        onClose={() => setLogModalOpen(false)}
+        monthKey={monthKey}
+        cars={data.cars}
+        onSuccess={handleSaleSuccess}
+      />
+
+      <CelebrationDialog
+        open={saleSuccessOpen}
+        title={successMessage.title}
+        message={successMessage.message}
+        confirmLabel="OK"
+        onClose={closeSaleSuccess}
+      />
+
+      <CelebrationDialog
+        open={tierCelebrationOpen}
+        title={tierMessage.title}
+        message={tierMessage.message}
+        confirmLabel="Awesome"
+        onClose={closeTierCelebration}
+      />
+    </div>
+  );
+}

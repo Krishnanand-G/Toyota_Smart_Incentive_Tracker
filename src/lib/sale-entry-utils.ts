@@ -34,14 +34,20 @@ export function buildChartSeries(
   soldDates: Date[],
   monthKey: string,
 ): ChartPoint[] {
-  const { year, month } = parseMonthKey(monthKey);
-  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-
   const countsByDay = new Map<number, number>();
   for (const soldAt of soldDates) {
     const day = soldAt.getUTCDate();
     countsByDay.set(day, (countsByDay.get(day) ?? 0) + 1);
   }
+  return buildChartSeriesFromDailyCounts(countsByDay, monthKey);
+}
+
+export function buildChartSeriesFromDailyCounts(
+  countsByDay: Map<number, number>,
+  monthKey: string,
+): ChartPoint[] {
+  const { year, month } = parseMonthKey(monthKey);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
 
   const series: ChartPoint[] = [];
   let cumulative = 0;

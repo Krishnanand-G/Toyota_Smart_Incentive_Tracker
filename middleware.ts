@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/middleware";
+import { isPortalRole, PORTAL_ROLE_COOKIE } from "@/lib/auth-cookie";
 
 const AUTH_PATHS = ["/admin", "/officer"];
 const PUBLIC_AUTH_PATHS = ["/", "/login", "/login/admin", "/login/officer"];
@@ -13,6 +14,11 @@ function isPublicAuthPath(pathname: string) {
 }
 
 async function getProfileRole(request: NextRequest) {
+  const cachedRole = request.cookies.get(PORTAL_ROLE_COOKIE)?.value;
+  if (isPortalRole(cachedRole)) {
+    return { role: cachedRole };
+  }
+
   const profileResponse = await fetch(new URL("/api/me", request.url), {
     headers: {
       cookie: request.headers.get("cookie") ?? "",
@@ -32,8 +38,10 @@ export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request);
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user;
 
   if (!user && isProtectedPath(pathname)) {
     return NextResponse.redirect(new URL("/", request.url));

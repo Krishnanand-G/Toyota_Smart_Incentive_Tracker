@@ -15,6 +15,7 @@ export function SignOutButton({ className, compact = false }: SignOutButtonProps
 
   async function handleSignOut() {
     setIsSigningOut(true);
+    await fetch("/api/me", { method: "DELETE" });
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.assign("/");

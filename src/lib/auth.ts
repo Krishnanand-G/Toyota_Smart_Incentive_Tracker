@@ -1,5 +1,6 @@
 import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,7 +12,7 @@ export type AuthProfile = {
   role: Role;
 };
 
-export async function getAuthProfile() {
+export const getAuthProfile = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,7 +41,6 @@ export async function getAuthProfile() {
   const normalizedEmail = user.email?.toLowerCase();
   if (!normalizedEmail) return null;
 
-  // Recover from local seed/supabase mismatch by linking known email to current auth id.
   profile = await prisma.user.findUnique({
     where: { email: normalizedEmail },
     select: {
@@ -70,7 +70,7 @@ export async function getAuthProfile() {
 
   if (!linked.isActive) return null;
   return linked;
-}
+});
 
 export async function requireAuth() {
   const profile = await getAuthProfile();
