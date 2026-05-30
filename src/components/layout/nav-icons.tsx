@@ -1,7 +1,7 @@
 "use client";
 
 import type { NavIconName } from "@/components/layout/nav-config";
-import { Car, History, Layers, LayoutDashboard, Users } from "lucide-react";
+import { Car, History, Layers, LayoutDashboard, PlusCircle, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const navIconMap: Record<NavIconName, LucideIcon> = {
@@ -10,6 +10,7 @@ const navIconMap: Record<NavIconName, LucideIcon> = {
   users: Users,
   dashboard: LayoutDashboard,
   history: History,
+  plus: PlusCircle,
 };
 
 export function NavIcon({ name, className }: { name: NavIconName; className?: string }) {

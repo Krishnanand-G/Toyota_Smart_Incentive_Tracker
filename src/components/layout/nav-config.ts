@@ -1,4 +1,4 @@
-export type NavIconName = "car" | "layers" | "users" | "dashboard" | "history";
+export type NavIconName = "car" | "layers" | "users" | "dashboard" | "history" | "plus";
 
 export type NavItem = {
   href: string;
@@ -16,6 +16,7 @@ export const adminNavItems: NavItem[] = [
 
 export const officerNavItems: NavItem[] = [
   { href: "/officer", label: "Dashboard", icon: "dashboard", match: "exact" },
+  { href: "/officer/log-sale", label: "Log sale", icon: "plus", match: "prefix" },
   { href: "/officer/history", label: "History", icon: "history", match: "prefix" },
 ];
 

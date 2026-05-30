@@ -1,14 +1,13 @@
 "use client";
 
 import { GlassAlert, GlassMonthPicker, GlassSkeleton, PageHeader } from "@/components/glass";
-import { CelebrationDialog } from "@/components/incentive";
-import { LogSaleModal } from "@/components/officer/log-sale-modal";
 import { MetricStrip } from "@/components/officer/metric-strip";
 import { RecentSalesList } from "@/components/officer/recent-sales-list";
 import type { PayoutResult } from "@/lib/incentive-types";
 import type { SlabShape } from "@/lib/incentive-types";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const ProgressChart = dynamic(
@@ -47,11 +46,6 @@ export function OfficerDashboardClient({ initialData, initialMonthKey }: Officer
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const skipInitialFetch = useRef(true);
-  const [logModalOpen, setLogModalOpen] = useState(false);
-  const [saleSuccessOpen, setSaleSuccessOpen] = useState(false);
-  const [tierCelebrationOpen, setTierCelebrationOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
-  const [tierMessage, setTierMessage] = useState({ title: "", message: "" });
 
   const loadDashboard = useCallback(async () => {
     setRefreshing(true);
@@ -75,53 +69,22 @@ export function OfficerDashboardClient({ initialData, initialMonthKey }: Officer
     void loadDashboard();
   }, [monthKey, loadDashboard, initialMonthKey]);
 
-  function handleSaleSuccess(result: {
-    entry: { carName: string; soldAt: string };
-    tierUnlocked: boolean;
-    tierLabel: string | null;
-    payout: { slabLabel: string; perUnitAmount: number; totalPayout: number };
-  }) {
-    const soldDate = new Date(result.entry.soldAt).toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-    setSuccessMessage({
-      title: "Sale logged",
-      message: `Recorded ${result.entry.carName} sold on ${soldDate}.`,
-    });
-    setSaleSuccessOpen(true);
-
-    if (result.tierUnlocked && result.tierLabel) {
-      setTierMessage({
-        title: `New tier: ${result.tierLabel}`,
-        message: `You're now earning ₹${result.payout.perUnitAmount.toLocaleString()} per unit. Estimated payout: ₹${result.payout.totalPayout.toLocaleString()}.`,
-      });
-    } else {
-      setTierMessage({ title: "", message: "" });
-    }
-
-    void loadDashboard();
-  }
-
-  function closeSaleSuccess() {
-    setSaleSuccessOpen(false);
-    if (tierMessage.title) {
-      setTierCelebrationOpen(true);
-    }
-  }
-
-  function closeTierCelebration() {
-    setTierCelebrationOpen(false);
-    setTierMessage({ title: "", message: "" });
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
         badge="Studio dashboard"
-        description="Track monthly progress and log individual car sales."
-        actions={<GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />}
+        description="Track monthly progress. Log new sales from the Log sale page."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />
+            <Link
+              href="/officer/log-sale"
+              className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-orange-400"
+            >
+              Log sale
+            </Link>
+          </div>
+        }
       />
 
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
@@ -133,7 +96,7 @@ export function OfficerDashboardClient({ initialData, initialMonthKey }: Officer
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <RecentSalesList entries={data.entries} onLogSale={() => setLogModalOpen(true)} />
+            <RecentSalesList entries={data.entries} />
           </div>
           <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
             <LiveTracker payout={data.payout} />
@@ -143,30 +106,6 @@ export function OfficerDashboardClient({ initialData, initialMonthKey }: Officer
           </div>
         </div>
       </div>
-
-      <LogSaleModal
-        open={logModalOpen}
-        onClose={() => setLogModalOpen(false)}
-        monthKey={monthKey}
-        cars={data.cars}
-        onSuccess={handleSaleSuccess}
-      />
-
-      <CelebrationDialog
-        open={saleSuccessOpen}
-        title={successMessage.title}
-        message={successMessage.message}
-        confirmLabel="OK"
-        onClose={closeSaleSuccess}
-      />
-
-      <CelebrationDialog
-        open={tierCelebrationOpen}
-        title={tierMessage.title}
-        message={tierMessage.message}
-        confirmLabel="Awesome"
-        onClose={closeTierCelebration}
-      />
     </div>
   );
 }
