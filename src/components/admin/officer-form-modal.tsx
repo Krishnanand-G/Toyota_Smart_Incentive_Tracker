@@ -233,7 +233,7 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
               <div>
                 <label className="mb-1.5 block text-sm text-muted">New password</label>
                 <GlassInput
-                  type="password"
+                  type="text"
                   value={form.newPassword}
                   onChange={(e) => setForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                   placeholder="Leave blank to keep current password"
@@ -242,7 +242,7 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
               <div>
                 <label className="mb-1.5 block text-sm text-muted">Confirm new password</label>
                 <GlassInput
-                  type="password"
+                  type="text"
                   value={form.confirmPassword}
                   onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                   placeholder="Re-enter new password"
@@ -253,7 +253,7 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
             <div>
               <label className="mb-1.5 block text-sm text-muted">Password</label>
               <GlassInput
-                type="password"
+                type="text"
                 value={form.password}
                 onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                 placeholder="Minimum 8 characters"
