@@ -1,5 +1,6 @@
 "use client";
 
+import { PayoutCurveChart, SlabScrubber, SlabTimeline } from "@/components/admin";
 import {
   GlassAlert,
   GlassBadge,
@@ -8,11 +9,12 @@ import {
   GlassSkeleton,
   PageHeader,
 } from "@/components/glass";
-import { SlabCard } from "@/components/incentive";
+import { SlabCard, TierLadder } from "@/components/incentive";
 import { calculateIncentive } from "@/lib/incentive";
 import type { PayoutResult, SlabShape } from "@/lib/incentive-types";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PROBE_UNITS = [0, 5, 10, 20, 30];
 
@@ -23,8 +25,14 @@ export default function AdminSlabsPage() {
   const [preview, setPreview] = useState<PayoutResult[]>([]);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [probeUnits, setProbeUnits] = useState(10);
+  const [activeTierIndex, setActiveTierIndex] = useState<number | null>(null);
 
-  async function loadSlabs() {
+  function sortRows(items: SlabShape[]) {
+    return [...items].sort((a, b) => a.minUnits - b.minUnits);
+  }
+
+  const loadSlabs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -33,7 +41,7 @@ export default function AdminSlabsPage() {
       const data = (await res.json()) as SlabShape[];
       setRows(
         data.length
-          ? data.map((d) => ({ ...d, perUnitAmount: Number(d.perUnitAmount), label: d.label ?? "" }))
+          ? sortRows(data.map((d) => ({ ...d, perUnitAmount: Number(d.perUnitAmount), label: d.label ?? "" })))
           : [{ minUnits: 0, maxUnits: 9, perUnitAmount: 1000, label: "Starter" }],
       );
     } catch (e) {
@@ -41,11 +49,11 @@ export default function AdminSlabsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadSlabs();
-  }, []);
+  }, [loadSlabs]);
 
   const localPreview = useMemo(() => {
     return PROBE_UNITS.map((units) => calculateIncentive(units, rows));
@@ -71,7 +79,7 @@ export default function AdminSlabsPage() {
       setSaving(false);
       return;
     }
-    setRows(data.slabs.map((d: SlabShape) => ({ ...d, perUnitAmount: Number(d.perUnitAmount), label: d.label ?? "" })));
+    setRows(sortRows(data.slabs.map((d: SlabShape) => ({ ...d, perUnitAmount: Number(d.perUnitAmount), label: d.label ?? "" }))));
     setPreview(data.preview ?? []);
     setDirty(false);
     setSaving(false);
@@ -81,18 +89,21 @@ export default function AdminSlabsPage() {
     const last = [...rows].sort((a, b) => a.minUnits - b.minUnits).at(-1);
     const minUnits =
       last?.maxUnits !== null && last?.maxUnits !== undefined ? last.maxUnits + 1 : (last?.minUnits ?? 0) + 1;
-    setRows((prev) => [...prev, { minUnits, maxUnits: minUnits + 9, perUnitAmount: 1000, label: "Tier" }]);
+    setRows((prev) => sortRows([...prev, { minUnits, maxUnits: minUnits + 9, perUnitAmount: 1000, label: "Tier" }]));
     setDirty(true);
   }
 
   function updateRow(index: number, field: keyof SlabShape, value: string | number | null) {
-    setRows((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+    setRows((prev) =>
+      sortRows(prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))),
+    );
     setDirty(true);
   }
 
   function removeRow(index: number) {
     setRows((prev) => prev.filter((_, i) => i !== index));
     setDirty(true);
+    setActiveTierIndex(null);
   }
 
   const displayPreview = preview.length ? preview : localPreview;
@@ -102,7 +113,7 @@ export default function AdminSlabsPage() {
       <PageHeader
         badge="Slab Engine"
         badgeVariant="amber"
-        description="Configure dynamic payout ranges for all officers."
+        description="Configure dynamic payout ranges for all sales officers."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {dirty ? <GlassBadge variant="amber">Unsaved</GlassBadge> : null}
@@ -127,18 +138,42 @@ export default function AdminSlabsPage() {
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
 
       {!loading ? (
-        <div className="space-y-4">
-          {rows.map((row, index) => (
-            <SlabCard
-              key={`${row.id ?? "new"}-${index}`}
-              slab={row}
-              index={index}
-              onChange={updateRow}
-              onRemove={removeRow}
-              canRemove={rows.length > 1}
+        <>
+          <GlassCard className="p-4 sm:p-5">
+            <SlabTimeline
+              slabs={rows}
+              activeIndex={activeTierIndex}
+              onSelect={setActiveTierIndex}
             />
-          ))}
-        </div>
+          </GlassCard>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <SlabScrubber slabs={rows} units={probeUnits} onUnitsChange={setProbeUnits} />
+            <TierLadder slabs={rows} totalUnits={probeUnits} />
+          </div>
+
+          <PayoutCurveChart slabs={rows} probeUnits={probeUnits} />
+
+          <div className="space-y-4">
+            {rows.map((row, index) => (
+              <div
+                key={`${row.id ?? "new"}-${index}`}
+                className={cn(
+                  activeTierIndex === index &&
+                    "rounded-xl ring-2 ring-orange-400/50 ring-offset-2 ring-offset-transparent",
+                )}
+              >
+                <SlabCard
+                  slab={row}
+                  index={index}
+                  onChange={updateRow}
+                  onRemove={removeRow}
+                  canRemove={rows.length > 1}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       ) : null}
 
       <GlassCard className="p-4 sm:p-5">

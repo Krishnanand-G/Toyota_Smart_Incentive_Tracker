@@ -24,7 +24,11 @@ function AmbientBackground() {
 
 export function PageShell({ portalLabel, pageTitle, pageSubtitle, navItems, children }: PageShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const today = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const today = new Date().toLocaleDateString("en-GB", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   useEffect(() => {
     function onResize() {

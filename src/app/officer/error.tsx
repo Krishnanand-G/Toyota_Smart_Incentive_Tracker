@@ -12,7 +12,7 @@ export default function OfficerError({
   return (
     <div className="space-y-3">
       <GlassAlert variant="error">
-        <p className="font-medium">Something went wrong in officer area.</p>
+        <p className="font-medium">Something went wrong in the sales officer area.</p>
         <p className="mt-1 text-xs opacity-90">{error.message}</p>
       </GlassAlert>
       <GlassButton type="button" variant="secondary" onClick={reset}>

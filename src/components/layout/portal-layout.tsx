@@ -21,7 +21,7 @@ export function PortalLayout({ portalLabel, navItems, children }: PortalLayoutPr
   const pageTitle = titleFromPath(pathname, navItems);
   const subtitle =
     portalLabel === "Admin Portal"
-      ? "Configure inventory, slabs, and officer performance."
+      ? "Configure inventory, slabs, and sales officer performance."
       : "Track sales monthly and monitor incentive payout.";
 
   return (

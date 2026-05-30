@@ -32,15 +32,22 @@ export function GlassModal({ open, onClose, title, children, className }: GlassM
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-4">
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <GlassCard variant="elevated" className={cn("relative z-10 w-full max-w-lg p-6", className)} role="dialog">
-        <div className="mb-4 flex items-start justify-between gap-4">
+      <GlassCard
+        variant="elevated"
+        className={cn(
+          "relative z-10 grid w-full max-w-lg max-h-[calc(100vh-2rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-6",
+          className,
+        )}
+        role="dialog"
+      >
+        <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
           {title ? <h2 className="text-lg font-semibold text-foreground">{title}</h2> : <span />}
           <button
             type="button"
@@ -51,7 +58,7 @@ export function GlassModal({ open, onClose, title, children, className }: GlassM
             <X size={18} />
           </button>
         </div>
-        {children}
+        <div className="min-h-0 overflow-hidden">{children}</div>
       </GlassCard>
     </div>
   );

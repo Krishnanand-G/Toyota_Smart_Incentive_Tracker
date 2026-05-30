@@ -8,9 +8,10 @@ export type NavItem = {
 };
 
 export const adminNavItems: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: "dashboard", match: "exact" },
   { href: "/admin/cars", label: "Cars", icon: "car", match: "prefix" },
   { href: "/admin/slabs", label: "Slabs", icon: "layers", match: "prefix" },
-  { href: "/admin/officers", label: "Officers", icon: "users", match: "prefix" },
+  { href: "/admin/officers", label: "Sales Officers", icon: "users", match: "prefix" },
 ];
 
 export const officerNavItems: NavItem[] = [

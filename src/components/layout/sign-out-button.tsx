@@ -17,7 +17,7 @@ export function SignOutButton({ className, compact = false }: SignOutButtonProps
     setIsSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.assign("/login");
+    window.location.assign("/");
   }
 
   return (
