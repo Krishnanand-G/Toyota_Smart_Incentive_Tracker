@@ -1,209 +1,200 @@
 "use client";
 
 import {
-  GlassAlert,
-  GlassBadge,
-  GlassButton,
-  GlassCard,
-  GlassInput,
-  GlassModal,
-  GlassSkeleton,
-  PageHeader,
-} from "@/components/glass";
-import { useEffect, useState } from "react";
-
-type Officer = {
-  id: string;
-  email: string;
-  fullName: string | null;
-  submissions: number;
-  latestMonth: string | null;
-  isActive: boolean;
-};
+  OfficerDetailPanel,
+  OfficerFormModal,
+  OfficerListItem,
+  OfficerStatsStrip,
+  type OfficerSummary,
+} from "@/components/admin";
+import { GlassAlert, GlassButton, GlassCard, GlassInput, GlassSkeleton, PageHeader } from "@/components/glass";
+import { UserPlus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type HistoryRow = {
   id: string;
   monthKey: string;
-  status: "DRAFT" | "SUBMITTED";
   totalUnits: number;
   totalIncentive: number;
+  slabLabel: string;
+  entryCount: number;
 };
 
 export default function AdminOfficersPage() {
-  const [officers, setOfficers] = useState<Officer[]>([]);
+  const [officers, setOfficers] = useState<OfficerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [editingOfficer, setEditingOfficer] = useState<OfficerSummary | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedOfficerId, setSelectedOfficerId] = useState<string | null>(null);
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-  async function loadOfficers() {
+  const loadOfficers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/officers");
-      if (!res.ok) throw new Error("Failed to load officers");
+      if (!res.ok) throw new Error("Failed to load sales officers");
       setOfficers(await res.json());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load officers");
+      setError(e instanceof Error ? e.message : "Failed to load sales officers");
     } finally {
       setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    loadOfficers();
   }, []);
 
   useEffect(() => {
-    if (!selectedOfficerId) return;
-    async function loadHistory() {
-      const res = await fetch(`/api/history?userId=${selectedOfficerId}`);
-      if (!res.ok) return;
-      setHistoryRows(await res.json());
+    loadOfficers();
+  }, [loadOfficers]);
+
+  useEffect(() => {
+    if (!selectedOfficerId) {
+      setHistoryRows([]);
+      return;
     }
+
+    async function loadHistory() {
+      setHistoryLoading(true);
+      try {
+        const res = await fetch(`/api/history?userId=${selectedOfficerId}`);
+        if (!res.ok) throw new Error("Failed to load history");
+        setHistoryRows(await res.json());
+      } catch {
+        setHistoryRows([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    }
+
     loadHistory();
   }, [selectedOfficerId]);
 
-  async function createOfficer(event: React.FormEvent) {
-    event.preventDefault();
-    setFormError(null);
-    const res = await fetch("/api/admin/officers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, fullName }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setFormError(data?.error?.formErrors?.[0] ?? "Could not create officer");
-      return;
-    }
-    setOpen(false);
-    setEmail("");
-    setFullName("");
-    await loadOfficers();
+  const filteredOfficers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return officers;
+    return officers.filter(
+      (officer) =>
+        officer.email.toLowerCase().includes(q) ||
+        (officer.fullName?.toLowerCase().includes(q) ?? false) ||
+        (officer.officerId?.toLowerCase().includes(q) ?? false),
+    );
+  }, [officers, searchQuery]);
+
+  const selectedOfficer = useMemo(
+    () => officers.find((officer) => officer.id === selectedOfficerId) ?? null,
+    [officers, selectedOfficerId],
+  );
+
+  const maxSales = useMemo(
+    () => Math.max(...officers.map((officer) => officer.totalSales), 1),
+    [officers],
+  );
+
+  const stats = useMemo(
+    () => ({
+      totalOfficers: officers.length,
+      officersWithSales: officers.filter((officer) => officer.totalSales > 0).length,
+      totalSales: officers.reduce((sum, officer) => sum + officer.totalSales, 0),
+      activeThisMonth: officers.reduce((sum, officer) => sum + officer.thisMonthSales, 0),
+    }),
+    [officers],
+  );
+
+  function openCreateModal() {
+    setEditingOfficer(null);
+    setOpen(true);
+  }
+
+  function openEditModal(officer: OfficerSummary) {
+    setEditingOfficer(officer);
+    setOpen(true);
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        badge="Officer Ops"
+        badge="Sales Officer Ops"
         badgeVariant="green"
-        description="Manage officers and submission activity."
+        description="Manage your sales team, track activity, and review monthly performance."
         actions={
-          <GlassButton type="button" variant="accent" onClick={() => setOpen(true)}>
-            Create officer
-          </GlassButton>
+          <div className="flex items-center gap-3">
+            <div className="glass-section hidden px-4 py-2 text-center sm:block">
+              <p className="font-mono text-xl font-semibold text-foreground">{officers.length}</p>
+              <p className="text-xs text-muted">Sales officers</p>
+            </div>
+            <GlassButton type="button" variant="accent" onClick={openCreateModal}>
+              <UserPlus size={16} />
+              Add sales officer
+            </GlassButton>
+          </div>
         }
       />
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {[1, 2].map((i) => (
-            <GlassSkeleton key={i} className="h-32 w-full" />
-          ))}
-        </div>
-      ) : null}
-      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
-      {!loading && !officers.length && !error ? (
-        <GlassCard className="p-6 text-sm text-muted">No officers found.</GlassCard>
-      ) : null}
+      {!loading && officers.length > 0 ? <OfficerStatsStrip stats={stats} /> : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {officers.map((officer) => (
-          <GlassCard
-            key={officer.id}
-            className={`space-y-2 border p-4 transition ${
-              selectedOfficerId === officer.id
-                ? "border-orange-500/50 ring-1 ring-orange-500/30"
-                : "border-white/10 hover:border-white/20"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-foreground">{officer.fullName || "Unnamed Officer"}</h3>
-              <GlassBadge variant={officer.submissions > 0 ? "blue" : "default"}>
-                {officer.submissions > 0 ? `${officer.submissions} submissions` : "No submissions"}
-              </GlassBadge>
+      {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="space-y-4">
+          <GlassInput
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, ID, or email..."
+          />
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <GlassSkeleton key={i} className="h-28 w-full" />
+              ))}
             </div>
-            <p className="text-sm text-muted">{officer.email}</p>
-            <p className="text-xs text-muted">Latest month: {officer.latestMonth ?? "N/A"}</p>
-            <GlassButton
-              type="button"
-              variant="secondary"
-              className="!px-3 !py-1.5 !text-xs"
-              onClick={() => setSelectedOfficerId(officer.id)}
-            >
-              View history
-            </GlassButton>
-          </GlassCard>
-        ))}
+          ) : null}
+
+          {!loading && !filteredOfficers.length ? (
+            <GlassCard className="p-8 text-center text-sm text-muted">
+              {searchQuery
+                ? "No sales officers match your search."
+                : "No sales officers yet. Add your first sales officer to get started."}
+            </GlassCard>
+          ) : null}
+
+          {!loading && filteredOfficers.length > 0 ? (
+            <div className="space-y-3">
+              {filteredOfficers.map((officer) => (
+                <OfficerListItem
+                  key={officer.id}
+                  officer={officer}
+                  selected={selectedOfficerId === officer.id}
+                  maxSales={maxSales}
+                  onSelect={setSelectedOfficerId}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <OfficerDetailPanel
+            officer={selectedOfficer}
+            historyRows={historyRows}
+            historyLoading={historyLoading}
+            onClose={() => setSelectedOfficerId(null)}
+            onEdit={openEditModal}
+          />
+        </div>
       </div>
 
-      {selectedOfficerId ? (
-        <GlassCard className="space-y-3 border border-white/10 p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Submission history</h3>
-            <button type="button" onClick={() => setSelectedOfficerId(null)} className="text-xs text-muted hover:text-foreground">
-              Close
-            </button>
-          </div>
-          {!historyRows.length ? (
-            <p className="text-sm text-muted">No submission history.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[400px] text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-left text-muted">
-                    <th className="px-2 py-2">Month</th>
-                    <th className="px-2 py-2">Status</th>
-                    <th className="px-2 py-2">Units</th>
-                    <th className="px-2 py-2">Payout</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyRows.map((row) => (
-                    <tr key={row.id} className="border-b border-white/5">
-                      <td className="px-2 py-2 text-foreground">{row.monthKey}</td>
-                      <td className="px-2 py-2">
-                        <GlassBadge variant={row.status === "SUBMITTED" ? "green" : "amber"}>{row.status}</GlassBadge>
-                      </td>
-                      <td className="px-2 py-2 font-mono text-muted">{row.totalUnits}</td>
-                      <td className="px-2 py-2 font-mono font-semibold text-orange-400">
-                        ₹{Number(row.totalIncentive).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </GlassCard>
-      ) : null}
-
-      <GlassModal open={open} onClose={() => setOpen(false)} title="Create officer">
-        <form onSubmit={createOfficer} className="space-y-3">
-          {formError ? <GlassAlert variant="error">{formError}</GlassAlert> : null}
-          <div>
-            <label className="mb-1.5 block text-sm text-muted">Full name</label>
-            <GlassInput value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm text-muted">Email</label>
-            <GlassInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <p className="text-xs text-muted">
-            Creates the Prisma user row. Add matching credentials in Supabase Auth for sign-in.
-          </p>
-          <div className="flex justify-end">
-            <GlassButton type="submit" variant="accent">
-              Create
-            </GlassButton>
-          </div>
-        </form>
-      </GlassModal>
+      <OfficerFormModal
+        open={open}
+        editing={editingOfficer}
+        onClose={() => {
+          setOpen(false);
+          setEditingOfficer(null);
+        }}
+        onSaved={loadOfficers}
+      />
     </div>
   );
 }
