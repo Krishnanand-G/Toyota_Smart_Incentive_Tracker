@@ -30,7 +30,7 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
     const today = new Date();
     const defaultDate = today <= end ? today : end;
     setSoldAt(formatDateInput(defaultDate));
-    setCarModelId((current) => (cars.some((c) => c.id === current) ? current : (cars[0]?.id ?? "")));
+    setCarModelId((current) => (current && cars.some((c) => c.id === current) ? current : ""));
     setError(null);
   }, [monthKey, cars]);
 
@@ -55,6 +55,7 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
         tierLabel: data.tierLabel,
         payout: data.payout,
       });
+      setCarModelId("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not log sale");
     } finally {
