@@ -1,8 +1,10 @@
-import { Role } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { composeCarDisplayName } from "@/lib/car-model-utils";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 import { carPayloadSchema } from "@/lib/validations/car";
+import { Role } from "@prisma/client";
+import { revalidateTag } from "next/cache";
+import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
@@ -17,17 +19,24 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const baseSuffix = parsed.data.baseSuffix || null;
+  const variant = parsed.data.variant || null;
+
   const updated = await prisma.carModel.update({
     where: { id: params.id },
     data: {
-      name: parsed.data.name,
+      modelName: parsed.data.modelName,
+      baseSuffix,
+      variant,
+      name: composeCarDisplayName(parsed.data.modelName, baseSuffix, variant),
       imageUrl: parsed.data.imageUrl,
       description: parsed.data.description || null,
-      sortOrder: parsed.data.sortOrder,
       isActive: true,
       deletedAt: null,
     },
   });
+
+  revalidateTag("active-cars");
 
   return NextResponse.json(updated);
 }
@@ -43,6 +52,8 @@ export async function DELETE(
     where: { id: params.id },
     data: { isActive: false, deletedAt: new Date() },
   });
+
+  revalidateTag("active-cars");
 
   return NextResponse.json(deleted);
 }

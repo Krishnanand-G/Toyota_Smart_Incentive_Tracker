@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 export const carPayloadSchema = z.object({
-  name: z.string().min(2).max(80),
+  modelName: z.string().min(2).max(60),
+  baseSuffix: z.string().max(30).optional().or(z.literal("")),
+  variant: z.string().max(80).optional().or(z.literal("")),
   imageUrl: z.string().url(),
-  description: z.string().max(300).optional().or(z.literal("")),
-  sortOrder: z.number().int().min(0).max(999).default(0),
+  description: z.string().max(1000).optional().or(z.literal("")),
 });
 
 export type CarPayload = z.infer<typeof carPayloadSchema>;
