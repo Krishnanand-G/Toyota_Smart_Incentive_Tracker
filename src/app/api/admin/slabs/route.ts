@@ -1,4 +1,5 @@
 import { Prisma, Role } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
@@ -39,6 +40,8 @@ export async function PUT(request: Request) {
       });
     }
   });
+
+  revalidateTag("incentive-slabs");
 
   const slabs = await prisma.incentiveSlab.findMany({
     orderBy: { minUnits: "asc" },
