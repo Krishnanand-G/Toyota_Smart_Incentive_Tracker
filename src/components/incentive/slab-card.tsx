@@ -2,32 +2,72 @@
 
 import { GlassButton, GlassCard, GlassInput } from "@/components/glass";
 import type { SlabShape } from "@/lib/incentive-types";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 
 export type SlabCardProps = {
   slab: SlabShape;
   index: number;
   onChange: (index: number, field: keyof SlabShape, value: string | number | null) => void;
   onRemove: (index: number) => void;
+  onMoveUp?: (index: number) => void;
+  onMoveDown?: (index: number) => void;
   canRemove: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 };
 
-export function SlabCard({ slab, index, onChange, onRemove, canRemove }: SlabCardProps) {
+export function SlabCard({
+  slab,
+  index,
+  onChange,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  canRemove,
+  canMoveUp = false,
+  canMoveDown = false,
+}: SlabCardProps) {
   return (
     <GlassCard className="space-y-3 border border-white/10 p-4 transition hover:border-white/20">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wider text-muted">Tier {index + 1}</p>
-        {canRemove ? (
-          <GlassButton
-            type="button"
-            variant="ghost"
-            className="!p-2"
-            onClick={() => onRemove(index)}
-            aria-label="Remove tier"
-          >
-            <Trash2 size={16} className="text-red-400" />
-          </GlassButton>
-        ) : null}
+        <div className="flex items-center gap-1">
+          {onMoveUp ? (
+            <GlassButton
+              type="button"
+              variant="ghost"
+              className="!p-2"
+              onClick={() => onMoveUp(index)}
+              disabled={!canMoveUp}
+              aria-label="Move tier up"
+            >
+              <ChevronUp size={16} />
+            </GlassButton>
+          ) : null}
+          {onMoveDown ? (
+            <GlassButton
+              type="button"
+              variant="ghost"
+              className="!p-2"
+              onClick={() => onMoveDown(index)}
+              disabled={!canMoveDown}
+              aria-label="Move tier down"
+            >
+              <ChevronDown size={16} />
+            </GlassButton>
+          ) : null}
+          {canRemove ? (
+            <GlassButton
+              type="button"
+              variant="ghost"
+              className="!p-2"
+              onClick={() => onRemove(index)}
+              aria-label="Remove tier"
+            >
+              <Trash2 size={16} className="text-red-400" />
+            </GlassButton>
+          ) : null}
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1">

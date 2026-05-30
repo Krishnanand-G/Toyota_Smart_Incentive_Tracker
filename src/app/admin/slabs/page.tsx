@@ -86,17 +86,15 @@ export default function AdminSlabsPage() {
   }
 
   function addRow() {
-    const last = [...rows].sort((a, b) => a.minUnits - b.minUnits).at(-1);
+    const last = rows.at(-1);
     const minUnits =
       last?.maxUnits !== null && last?.maxUnits !== undefined ? last.maxUnits + 1 : (last?.minUnits ?? 0) + 1;
-    setRows((prev) => sortRows([...prev, { minUnits, maxUnits: minUnits + 9, perUnitAmount: 1000, label: "Tier" }]));
+    setRows((prev) => [...prev, { minUnits, maxUnits: minUnits + 9, perUnitAmount: 1000, label: "Tier" }]);
     setDirty(true);
   }
 
   function updateRow(index: number, field: keyof SlabShape, value: string | number | null) {
-    setRows((prev) =>
-      sortRows(prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))),
-    );
+    setRows((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
     setDirty(true);
   }
 
@@ -104,6 +102,24 @@ export default function AdminSlabsPage() {
     setRows((prev) => prev.filter((_, i) => i !== index));
     setDirty(true);
     setActiveTierIndex(null);
+  }
+
+  function moveRow(index: number, direction: "up" | "down") {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+    setRows((prev) => {
+      const next = [...prev];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+    setDirty(true);
+    setActiveTierIndex((current) => {
+      if (current === null) return null;
+      if (current === index) return targetIndex;
+      if (current === targetIndex) return index;
+      return current;
+    });
   }
 
   const displayPreview = preview.length ? preview : localPreview;
@@ -114,17 +130,7 @@ export default function AdminSlabsPage() {
         badge="Slab Engine"
         badgeVariant="amber"
         description="Configure dynamic payout ranges for all sales officers."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {dirty ? <GlassBadge variant="amber">Unsaved</GlassBadge> : null}
-            <GlassButton type="button" variant="secondary" onClick={addRow}>
-              Add tier
-            </GlassButton>
-            <GlassButton type="button" variant="accent" onClick={save} disabled={saving}>
-              {saving ? "Saving..." : "Save slabs"}
-            </GlassButton>
-          </div>
-        }
+        actions={dirty ? <GlassBadge variant="amber">Unsaved</GlassBadge> : undefined}
       />
       <p className="text-xs text-muted">Changes affect incentive calculations instantly across dashboards.</p>
 
@@ -155,6 +161,10 @@ export default function AdminSlabsPage() {
           <PayoutCurveChart slabs={rows} probeUnits={probeUnits} />
 
           <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted">Edit tiers</h3>
+              <p className="text-xs text-muted">Use arrows to reorder</p>
+            </div>
             {rows.map((row, index) => (
               <div
                 key={`${row.id ?? "new"}-${index}`}
@@ -168,10 +178,22 @@ export default function AdminSlabsPage() {
                   index={index}
                   onChange={updateRow}
                   onRemove={removeRow}
+                  onMoveUp={(i) => moveRow(i, "up")}
+                  onMoveDown={(i) => moveRow(i, "down")}
                   canRemove={rows.length > 1}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < rows.length - 1}
                 />
               </div>
             ))}
+            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+              <GlassButton type="button" variant="secondary" onClick={addRow}>
+                Add tier
+              </GlassButton>
+              <GlassButton type="button" variant="accent" onClick={save} disabled={saving}>
+                {saving ? "Saving..." : "Save slabs"}
+              </GlassButton>
+            </div>
           </div>
         </>
       ) : null}
