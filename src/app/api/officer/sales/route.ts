@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
   const cars = await prisma.carModel.findMany({
     where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    orderBy: { name: "asc" },
   });
 
   const slabs = await prisma.incentiveSlab.findMany({ orderBy: { minUnits: "asc" } });

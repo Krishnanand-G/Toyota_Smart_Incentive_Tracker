@@ -1,3 +1,4 @@
+export { CelebrationDialog } from "./celebration-dialog";
 export { ConfirmDialog } from "./confirm-dialog";
 export { LiveTracker } from "./live-tracker";
 export { SlabCard } from "./slab-card";

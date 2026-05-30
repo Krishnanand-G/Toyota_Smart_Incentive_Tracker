@@ -1,247 +1,177 @@
 "use client";
 
-import {
-  GlassAlert,
-  GlassButton,
-  GlassCard,
-  GlassSkeleton,
-  PageHeader,
-} from "@/components/glass";
-import { ConfirmDialog, LiveTracker, TierLadder } from "@/components/incentive";
-import { calculateIncentive } from "@/lib/incentive";
+import { GlassAlert, GlassMonthPicker, GlassSkeleton, PageHeader } from "@/components/glass";
+import { CelebrationDialog, LiveTracker, TierLadder } from "@/components/incentive";
+import { LogSaleModal } from "@/components/officer/log-sale-modal";
+import { MetricStrip } from "@/components/officer/metric-strip";
+import { RecentSalesList } from "@/components/officer/recent-sales-list";
+import type { PayoutResult } from "@/lib/incentive-types";
 import type { SlabShape } from "@/lib/incentive-types";
-import { motion } from "framer-motion";
-import { Minus, Plus } from "lucide-react";
-import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { currentMonthKey } from "@/lib/date-picker-utils";
+import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type Car = { id: string; name: string; imageUrl: string };
-type SaleItem = { carModelId: string; units: number };
-type SaleResponse = {
-  cars: Car[];
+const ProgressChart = dynamic(
+  () => import("@/components/officer/progress-chart").then((mod) => mod.ProgressChart),
+  { loading: () => <GlassSkeleton className="h-64 w-full" /> },
+);
+
+type DashboardData = {
+  monthKey: string;
+  cars: { id: string; name: string; imageUrl: string }[];
   slabs: SlabShape[];
-  sale: { items: SaleItem[]; status: "DRAFT" | "SUBMITTED" } | null;
-  payout: {
-    totalUnits: number;
-    slabLabel: string;
-    perUnitAmount: number;
-    totalPayout: number;
-    nextTierDeltaUnits: number | null;
-  };
-  submitted: boolean;
+  entries: { id: string; carName: string; carImageUrl: string; soldAt: string }[];
+  totalUnits: number;
+  payout: PayoutResult;
+  chartSeries: { date: string; cumulativeUnits: number }[];
 };
-
-function currentMonthKey() {
-  const date = new Date();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${date.getFullYear()}-${month}`;
-}
 
 export default function OfficerDashboardPage() {
   const [monthKey, setMonthKey] = useState(currentMonthKey());
-  const [cars, setCars] = useState<Car[]>([]);
-  const [slabs, setSlabs] = useState<SlabShape[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const hasLoaded = useRef(false);
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [saleSuccessOpen, setSaleSuccessOpen] = useState(false);
+  const [tierCelebrationOpen, setTierCelebrationOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
+  const [tierMessage, setTierMessage] = useState({ title: "", message: "" });
 
-  const loadMonth = useCallback(async () => {
-    setLoading(true);
+  const loadDashboard = useCallback(async () => {
+    if (!hasLoaded.current) setLoading(true);
+    else setRefreshing(true);
     setError(null);
     try {
-      const res = await fetch(`/api/officer/sales?month=${monthKey}`);
-      if (!res.ok) throw new Error("Failed to load sales data");
-      const data = (await res.json()) as SaleResponse;
-      setCars(data.cars);
-      setSlabs(data.slabs ?? []);
-      const mapped: Record<string, number> = {};
-      for (const car of data.cars) mapped[car.id] = 0;
-      data.sale?.items.forEach((item) => {
-        mapped[item.carModelId] = item.units;
-      });
-      setCounts(mapped);
-      setSubmitted(data.submitted);
+      const res = await fetch(`/api/officer/dashboard?month=${monthKey}`);
+      if (!res.ok) throw new Error("Failed to load dashboard");
+      setData((await res.json()) as DashboardData);
+      hasLoaded.current = true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load data");
+      setError(e instanceof Error ? e.message : "Failed to load dashboard");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [monthKey]);
 
   useEffect(() => {
-    loadMonth();
-  }, [loadMonth]);
+    loadDashboard();
+  }, [loadDashboard]);
 
-  const totalUnits = useMemo(
-    () => Object.values(counts).reduce((sum, value) => sum + value, 0),
-    [counts],
-  );
-
-  const livePayout = useMemo(() => {
-    if (!slabs.length) {
-      return {
-        totalUnits,
-        slabLabel: "No slab configured",
-        perUnitAmount: 0,
-        totalPayout: 0,
-        nextTierDeltaUnits: null,
-      };
-    }
-    return calculateIncentive(totalUnits, slabs);
-  }, [totalUnits, slabs]);
-
-  async function saveDraft() {
-    setSaving(true);
-    setError(null);
-    const items = Object.entries(counts).map(([carModelId, units]) => ({ carModelId, units }));
-    const res = await fetch("/api/officer/sales", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monthKey, items }),
+  function handleSaleSuccess(result: {
+    entry: { carName: string; soldAt: string };
+    tierUnlocked: boolean;
+    tierLabel: string | null;
+    payout: { slabLabel: string; perUnitAmount: number; totalPayout: number };
+  }) {
+    const soldDate = new Date(result.entry.soldAt).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data?.error?.formErrors?.[0] ?? "Could not save draft");
-      setSaving(false);
-      return;
+    setSuccessMessage({
+      title: "Sale logged",
+      message: `Recorded ${result.entry.carName} sold on ${soldDate}.`,
+    });
+    setSaleSuccessOpen(true);
+
+    if (result.tierUnlocked && result.tierLabel) {
+      setTierMessage({
+        title: `New tier: ${result.tierLabel}`,
+        message: `You're now earning ₹${result.payout.perUnitAmount.toLocaleString()} per unit. Estimated payout: ₹${result.payout.totalPayout.toLocaleString()}.`,
+      });
+    } else {
+      setTierMessage({ title: "", message: "" });
     }
-    setSaving(false);
+
+    void loadDashboard();
   }
 
-  async function submitMonth() {
-    setSubmitError(null);
-    const res = await fetch("/api/officer/sales", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monthKey }),
-    });
-    if (!res.ok) {
-      setSubmitError("Could not submit month. Save your draft and try again.");
-      return;
+  function closeSaleSuccess() {
+    setSaleSuccessOpen(false);
+    if (tierMessage.title) {
+      setTierCelebrationOpen(true);
     }
-    setSubmitted(true);
-    setConfirmSubmit(false);
   }
 
-  function updateUnits(carId: string, next: number) {
-    if (submitted) return;
-    setCounts((prev) => ({ ...prev, [carId]: Math.max(0, next) }));
+  function closeTierCelebration() {
+    setTierCelebrationOpen(false);
+    setTierMessage({ title: "", message: "" });
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        badge="Monthly Entry"
-        description="Log sold units and track payout in real time."
-        actions={
-          <input
-            type="month"
-            value={monthKey}
-            onChange={(e) => setMonthKey(e.target.value)}
-            className="glass-input rounded-xl px-3 py-2 text-sm"
-          />
-        }
+        badge="Studio dashboard"
+        description="Track monthly progress and log individual car sales."
+        actions={<GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />}
       />
-      <p className="text-xs text-muted">Workflow: choose month → adjust units → save draft → submit final.</p>
 
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
-      {submitError ? <GlassAlert variant="error">{submitError}</GlassAlert> : null}
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            {[1, 2, 3].map((i) => (
-              <GlassSkeleton key={i} className="h-24 w-full" />
+      {loading && !data ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <GlassSkeleton key={i} className="h-20 w-full" />
             ))}
           </div>
           <GlassSkeleton className="h-64 w-full" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            {cars.map((car) => (
-              <motion.div
-                key={car.id}
-                whileHover={{ scale: 1.005 }}
-                transition={{ duration: 0.2 }}
-              >
-                <GlassCard className="flex items-center gap-3 border border-white/10 p-3 transition hover:border-white/20 sm:p-4">
-                  <Image
-                    src={car.imageUrl}
-                    alt={car.name}
-                    width={220}
-                    height={120}
-                    className="h-16 w-24 rounded-lg object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">{car.name}</p>
-                    <p className="text-xs text-muted">Units sold this month</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateUnits(car.id, (counts[car.id] ?? 0) - 1)}
-                      className="glass-pill rounded-lg p-2 text-muted hover:text-foreground"
-                      disabled={submitted}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="w-8 text-center font-mono text-sm font-semibold text-foreground">
-                      {counts[car.id] ?? 0}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateUnits(car.id, (counts[car.id] ?? 0) + 1)}
-                      className="glass-pill rounded-lg p-2 text-muted hover:text-foreground"
-                      disabled={submitted}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <GlassSkeleton className="h-80 w-full lg:col-span-2" />
+            <GlassSkeleton className="h-80 w-full" />
           </div>
+        </div>
+      ) : data ? (
+        <div className={cn("space-y-6", refreshing && "opacity-80 transition-opacity")}>
+          {refreshing ? <p className="text-xs text-muted">Updating…</p> : null}
+          <MetricStrip payout={data.payout} />
+          <ProgressChart data={data.chartSeries} monthKey={data.monthKey} />
 
-          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-            <LiveTracker payout={livePayout} submitted={submitted} />
-            {slabs.length > 0 ? <TierLadder slabs={slabs} totalUnits={totalUnits} /> : null}
-            <div className="flex flex-col gap-2">
-              <GlassButton
-                type="button"
-                variant="secondary"
-                onClick={saveDraft}
-                disabled={submitted || saving}
-                className="w-full"
-              >
-                {saving ? "Saving..." : "Save draft"}
-              </GlassButton>
-              <GlassButton
-                type="button"
-                variant="accent"
-                onClick={() => setConfirmSubmit(true)}
-                disabled={submitted}
-                className="w-full"
-              >
-                {submitted ? "Submitted" : "Submit month"}
-              </GlassButton>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RecentSalesList
+                entries={data.entries}
+                onLogSale={() => setLogModalOpen(true)}
+              />
+            </div>
+            <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+              <LiveTracker payout={data.payout} />
+              {data.slabs.length > 0 ? (
+                <TierLadder slabs={data.slabs} totalUnits={data.totalUnits} />
+              ) : null}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <ConfirmDialog
-        open={confirmSubmit}
-        title="Submit this month?"
-        message="You will not be able to edit volumes after submission. Make sure your draft is saved."
-        confirmLabel="Submit"
-        variant="default"
-        onConfirm={submitMonth}
-        onCancel={() => setConfirmSubmit(false)}
+      {data ? (
+        <LogSaleModal
+          open={logModalOpen}
+          onClose={() => setLogModalOpen(false)}
+          monthKey={monthKey}
+          cars={data.cars}
+          onSuccess={handleSaleSuccess}
+        />
+      ) : null}
+
+      <CelebrationDialog
+        open={saleSuccessOpen}
+        title={successMessage.title}
+        message={successMessage.message}
+        confirmLabel="OK"
+        onClose={closeSaleSuccess}
+      />
+
+      <CelebrationDialog
+        open={tierCelebrationOpen}
+        title={tierMessage.title}
+        message={tierMessage.message}
+        confirmLabel="Awesome"
+        onClose={closeTierCelebration}
       />
     </div>
   );

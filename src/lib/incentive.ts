@@ -8,6 +8,17 @@ export type IncentiveResult = {
   nextTierDeltaUnits: number | null;
 };
 
+export function getSlabIndex(totalUnits: number, slabs: SlabShape[]): number {
+  const ordered = [...slabs].sort((a, b) => a.minUnits - b.minUnits);
+  if (!ordered.length) return -1;
+
+  const index = ordered.findIndex(
+    (slab) =>
+      totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits),
+  );
+  return index >= 0 ? index : 0;
+}
+
 export function calculateIncentive(totalUnits: number, slabs: SlabShape[]): IncentiveResult {
   const ordered = [...slabs].sort((a, b) => a.minUnits - b.minUnits);
   const current =
