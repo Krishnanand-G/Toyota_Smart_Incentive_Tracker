@@ -5,7 +5,7 @@ import { useSaleCelebration } from "@/components/officer/use-sale-celebration";
 import { GlassAlert, GlassBadge, GlassCard, GlassMonthPicker, PageHeader } from "@/components/glass";
 import type { CarModelOption } from "@/components/officer/car-model-picker";
 import type { PayoutResult } from "@/lib/incentive-types";
-import { formatMonthDisplay } from "@/lib/date-picker-utils";
+import { formatMonthDisplay, formatUtcDate } from "@/lib/date-picker-utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -146,12 +146,7 @@ export function LogSalePageClient({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium text-foreground">{entry.carName}</p>
-                      <p className="text-[11px] text-muted">
-                        {new Date(entry.soldAt).toLocaleDateString(undefined, {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </p>
+                      <p className="text-[11px] text-muted">{formatUtcDate(entry.soldAt)}</p>
                     </div>
                   </li>
                 ))}

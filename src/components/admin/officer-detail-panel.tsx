@@ -3,6 +3,7 @@
 import { OfficerAvatar } from "@/components/admin/officer-avatar";
 import { GlassBadge, GlassButton, GlassCard, GlassSkeleton } from "@/components/glass";
 import type { OfficerSummary } from "@/components/admin/officer-list-item";
+import { formatMonthDisplay } from "@/lib/date-picker-utils";
 import { motion } from "framer-motion";
 import { Calendar, IndianRupee, Pencil, User, X } from "lucide-react";
 
@@ -22,12 +23,6 @@ type OfficerDetailPanelProps = {
   onClose: () => void;
   onEdit: (officer: OfficerSummary) => void;
 };
-
-function formatMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
 
 export function OfficerDetailPanel({
   officer,
@@ -141,7 +136,7 @@ export function OfficerDetailPanel({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-mono text-sm font-semibold text-foreground">
-                        {formatMonthLabel(row.monthKey)}
+                        {formatMonthDisplay(row.monthKey)}
                       </p>
                       <p className="mt-0.5 text-xs text-muted">
                         {row.entryCount} sale{row.entryCount === 1 ? "" : "s"} logged

@@ -2,6 +2,7 @@
 
 import { CelebrationDialog } from "@/components/incentive";
 import type { LogSaleSuccessResult } from "@/components/officer/log-sale-form";
+import { formatUtcDate } from "@/lib/date-picker-utils";
 import { useState } from "react";
 
 export function useSaleCelebration() {
@@ -11,11 +12,7 @@ export function useSaleCelebration() {
   const [tierMessage, setTierMessage] = useState({ title: "", message: "" });
 
   function handleSaleSuccess(result: LogSaleSuccessResult) {
-    const soldDate = new Date(result.entry.soldAt).toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    const soldDate = formatUtcDate(result.entry.soldAt);
     setSuccessMessage({
       title: "Sale logged",
       message: `Recorded ${result.entry.carName} sold on ${soldDate}.`,

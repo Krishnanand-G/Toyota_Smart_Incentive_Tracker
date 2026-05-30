@@ -2,6 +2,7 @@
 
 import { OfficerAvatar } from "@/components/admin/officer-avatar";
 import { GlassBadge, GlassCard } from "@/components/glass";
+import { formatMonthDisplay } from "@/lib/date-picker-utils";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ChevronRight, Mail, TrendingUp } from "lucide-react";
@@ -24,13 +25,6 @@ type OfficerListItemProps = {
   maxSales: number;
   onSelect: (id: string) => void;
 };
-
-function formatMonth(monthKey: string | null) {
-  if (!monthKey) return "No activity";
-  const [year, month] = monthKey.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
-}
 
 export function OfficerListItem({ officer, selected, maxSales, onSelect }: OfficerListItemProps) {
   const name = officer.fullName || "Unnamed sales officer";
@@ -92,7 +86,7 @@ export function OfficerListItem({ officer, selected, maxSales, onSelect }: Offic
                   <TrendingUp size={12} />
                   {officer.activeMonths} active month{officer.activeMonths === 1 ? "" : "s"}
                 </span>
-                <span>Latest: {formatMonth(officer.latestMonth)}</span>
+                <span>Latest: {officer.latestMonth ? formatMonthDisplay(officer.latestMonth) : "No activity"}</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
                 <div

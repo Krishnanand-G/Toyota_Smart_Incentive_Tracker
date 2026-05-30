@@ -1,7 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
-import { formatMonthDisplay } from "@/lib/date-picker-utils";
+import { formatChartDayLabel, formatMonthDisplay } from "@/lib/date-picker-utils";
 import {
   CartesianGrid,
   Line,
@@ -21,8 +21,7 @@ type ProgressChartProps = {
 };
 
 function formatDayLabel(date: string) {
-  const day = date.split("-")[2];
-  return day ? String(Number(day)) : date;
+  return formatChartDayLabel(date);
 }
 
 export function ProgressChart({ data, monthKey, totalUnits }: ProgressChartProps) {
@@ -68,7 +67,7 @@ export function ProgressChart({ data, monthKey, totalUnits }: ProgressChartProps
                   borderRadius: "12px",
                   fontSize: "12px",
                 }}
-                labelFormatter={(label) => `Day ${formatDayLabel(String(label))}`}
+                labelFormatter={(label) => formatDayLabel(String(label))}
                 formatter={(value) => [`${value} units`, "Cumulative"]}
               />
               <Line

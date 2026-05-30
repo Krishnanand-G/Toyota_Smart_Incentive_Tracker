@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { formatChartDayLabel } from "@/lib/date-picker-utils";
 import {
   CartesianGrid,
   Line,
@@ -17,11 +18,6 @@ type SalesTrendChartProps = {
   data: TrendPoint[];
   label: string;
 };
-
-function formatDayLabel(date: string) {
-  const parts = date.split("-");
-  return parts.length >= 3 ? `${parts[1]}/${parts[2]}` : date;
-}
 
 export function SalesTrendChart({ data, label }: SalesTrendChartProps) {
   const hasSales = data.some((point) => point.dailyUnits > 0);
@@ -44,7 +40,7 @@ export function SalesTrendChart({ data, label }: SalesTrendChartProps) {
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
-                tickFormatter={formatDayLabel}
+                tickFormatter={formatChartDayLabel}
                 interval="preserveStartEnd"
                 tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
                 axisLine={false}
@@ -64,7 +60,7 @@ export function SalesTrendChart({ data, label }: SalesTrendChartProps) {
                   borderRadius: "12px",
                   fontSize: "12px",
                 }}
-                labelFormatter={(label) => formatDayLabel(String(label))}
+                labelFormatter={(label) => formatChartDayLabel(String(label))}
                 formatter={(value, name) => [
                   `${value} units`,
                   name === "cumulativeUnits" ? "Cumulative" : "Daily",

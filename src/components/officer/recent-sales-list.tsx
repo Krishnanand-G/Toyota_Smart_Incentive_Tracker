@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { formatUtcDate } from "@/lib/date-picker-utils";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Image from "next/image";
@@ -63,13 +64,7 @@ export function RecentSalesList({ entries }: RecentSalesListProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{entry.carName}</p>
-                <p className="text-xs text-muted">
-                  {new Date(entry.soldAt).toLocaleDateString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
+                <p className="text-xs text-muted">{formatUtcDate(entry.soldAt)}</p>
               </div>
             </li>
           ))}

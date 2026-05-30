@@ -2,6 +2,7 @@
 
 import { CarModelPicker, type CarModelOption } from "@/components/officer/car-model-picker";
 import { GlassAlert, GlassButton, GlassDatePicker } from "@/components/glass";
+import { formatDateDisplay } from "@/lib/date-picker-utils";
 import { formatDateInput, monthBoundsUtc } from "@/lib/sale-entry-utils";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -94,7 +95,7 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
           required
         />
         <p className="text-xs text-muted">
-          Sale must fall within the selected month ({minDate} – {maxDate}).
+          Sale must fall within the selected month ({formatDateDisplay(minDate)} – {formatDateDisplay(maxDate)}).
         </p>
       </section>
 

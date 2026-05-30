@@ -1,7 +1,7 @@
 "use client";
 
 import { GlassAlert, GlassBadge, GlassCard, GlassSkeleton, PageHeader } from "@/components/glass";
-import { formatMonthDisplay } from "@/lib/date-picker-utils";
+import { formatMonthDisplay, formatUtcDate } from "@/lib/date-picker-utils";
 import { cn } from "@/lib/utils";
 import { ChevronDown, TrendingUp } from "lucide-react";
 import Image from "next/image";
@@ -176,14 +176,7 @@ export function OfficerHistoryClient() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">{entry.carName}</p>
-                          <p className="text-xs text-muted">
-                            {new Date(entry.soldAt).toLocaleDateString(undefined, {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </p>
+                          <p className="text-xs text-muted">{formatUtcDate(entry.soldAt, { style: "long" })}</p>
                         </div>
                       </li>
                     ))

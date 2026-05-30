@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { formatUtcDate } from "@/lib/date-picker-utils";
 
 type RecentActivity = {
   id: string;
@@ -12,15 +13,6 @@ type RecentActivity = {
 type RecentActivityFeedProps = {
   data: RecentActivity[];
 };
-
-function formatSoldAt(iso: string) {
-  const date = new Date(iso);
-  return date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export function RecentActivityFeed({ data }: RecentActivityFeedProps) {
   return (
@@ -45,7 +37,7 @@ export function RecentActivityFeed({ data }: RecentActivityFeedProps) {
                 <p className="truncate text-sm font-medium text-foreground">{item.carName}</p>
                 <p className="truncate text-xs text-muted">{item.officerName}</p>
               </div>
-              <p className="shrink-0 text-xs text-muted">{formatSoldAt(item.soldAt)}</p>
+              <p className="shrink-0 text-xs text-muted">{formatUtcDate(item.soldAt)}</p>
             </li>
           ))}
         </ul>
