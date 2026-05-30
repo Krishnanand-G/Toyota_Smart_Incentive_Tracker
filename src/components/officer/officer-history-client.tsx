@@ -149,7 +149,13 @@ export function OfficerHistoryClient() {
               </button>
 
               {open ? (
-                <ul className="space-y-2 border-t border-white/10 px-4 py-3">
+                <ul
+                  className={cn(
+                    "space-y-2 border-t border-white/10 px-4 py-3",
+                    month.entries.length > 0 &&
+                      "max-h-[min(22rem,55vh)] overflow-y-auto pr-2 dark-scrollbar",
+                  )}
+                >
                   {month.entries.length === 0 ? (
                     <li className="text-sm text-muted">No individual entries found.</li>
                   ) : (

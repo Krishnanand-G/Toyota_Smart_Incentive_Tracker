@@ -1,29 +1,16 @@
 "use client";
 
-import { GlassAlert, GlassMonthPicker, GlassSkeleton, PageHeader } from "@/components/glass";
+import { GlassAlert, GlassMonthPicker, PageHeader } from "@/components/glass";
+import { LiveTracker } from "@/components/incentive/live-tracker";
+import { TierLadder } from "@/components/incentive/tier-ladder";
 import { MetricStrip } from "@/components/officer/metric-strip";
+import { ProgressChart } from "@/components/officer/progress-chart";
 import { RecentSalesList } from "@/components/officer/recent-sales-list";
 import type { PayoutResult } from "@/lib/incentive-types";
 import type { SlabShape } from "@/lib/incentive-types";
 import { cn } from "@/lib/utils";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const ProgressChart = dynamic(
-  () => import("@/components/officer/progress-chart").then((mod) => mod.ProgressChart),
-  { loading: () => <GlassSkeleton className="h-64 w-full" /> },
-);
-
-const LiveTracker = dynamic(
-  () => import("@/components/incentive/live-tracker").then((mod) => mod.LiveTracker),
-  { loading: () => <GlassSkeleton className="h-40 w-full" /> },
-);
-
-const TierLadder = dynamic(
-  () => import("@/components/incentive/tier-ladder").then((mod) => mod.TierLadder),
-  { loading: () => <GlassSkeleton className="h-48 w-full" /> },
-);
 
 export type OfficerDashboardData = {
   monthKey: string;
@@ -92,7 +79,7 @@ export function OfficerDashboardClient({ initialData, initialMonthKey }: Officer
       <div className={cn("space-y-6", refreshing && "opacity-80 transition-opacity")}>
         {refreshing ? <p className="text-xs text-muted">Updating…</p> : null}
         <MetricStrip payout={data.payout} />
-        <ProgressChart data={data.chartSeries} monthKey={data.monthKey} />
+        <ProgressChart data={data.chartSeries} monthKey={data.monthKey} totalUnits={data.totalUnits} />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">

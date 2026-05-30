@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { formatMonthDisplay } from "@/lib/date-picker-utils";
 import {
   CartesianGrid,
   Line,
@@ -16,6 +17,7 @@ export type ChartPoint = { date: string; cumulativeUnits: number };
 type ProgressChartProps = {
   data: ChartPoint[];
   monthKey: string;
+  totalUnits: number;
 };
 
 function formatDayLabel(date: string) {
@@ -23,15 +25,15 @@ function formatDayLabel(date: string) {
   return day ? String(Number(day)) : date;
 }
 
-export function ProgressChart({ data, monthKey }: ProgressChartProps) {
-  const hasSales = data.length > 0 && data[data.length - 1].cumulativeUnits > 0;
+export function ProgressChart({ data, monthKey, totalUnits }: ProgressChartProps) {
+  const hasSales = totalUnits > 0;
 
   return (
     <GlassCard className="border border-white/10 p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Monthly progress</h3>
-          <p className="text-xs text-muted">Cumulative units sold — {monthKey}</p>
+          <p className="text-xs text-muted">Cumulative units sold — {formatMonthDisplay(monthKey)}</p>
         </div>
       </div>
 
@@ -40,8 +42,8 @@ export function ProgressChart({ data, monthKey }: ProgressChartProps) {
           Log your first sale to see progress over time.
         </div>
       ) : (
-        <div className="h-56 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-56 w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
             <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
               <XAxis
