@@ -1,61 +1,45 @@
 # Toyota Smart Incentive Tracker
 
-Production-style Toyota incentive tracking app with role-based auth, admin configuration engine, dynamic slab payouts, and a real-time sales officer calculation dashboard.
+Hey! This is a web app I made for tracking Toyota car sales and calculating incentives for sales officers.
 
-**Live URL:** _Add your Vercel deployment URL here_
+Basically admins can add cars, set up payout tiers (slabs), and manage officers. Officers log their sales and see how much incentive money they might get based on how many cars they sold that month.
 
-## Stack
+**Live site:** put your vercel link here when you deploy
 
-- Next.js 14 (App Router) + TypeScript
-- Tailwind CSS + dark Cursor-inspired design system
-- Framer Motion (UI polish)
-- Supabase Auth (`@supabase/ssr`)
-- Prisma ORM + PostgreSQL
+## What I used
 
-## Features
+- Next.js 14 with TypeScript
+- Tailwind CSS for styling (dark theme)
+- Supabase for login stuff
+- Prisma + PostgreSQL for the database
+- Framer Motion for some animations
+- Recharts for graphs on the dashboard
 
-| Role | Capabilities |
-|------|----------------|
-| **Admin** | Car inventory CRUD, dynamic slab engine, sales officer management |
-| **Sales Officer** | Monthly volume entry, **live** incentive tracker, draft/save/submit, history |
+## Main features
 
-- Secure role routing for `ADMIN` and `OFFICER`
-- Real-time payout calculation as volumes change (shared `calculateIncentive` logic)
-- Admin slab editor with tier cards and live preview probes
-- Sales officer/admin history APIs and views
+**Admin side (`/admin`)**
+- Dashboard with sales stats
+- Add/edit/delete car models (with images from CarWale)
+- Configure incentive slabs (different payout rates for different unit ranges)
+- Create and manage sales officer accounts
 
-## Architecture
+**Sales officer side (`/officer`)**
+- Dashboard with metrics, progress chart, tier ladder, and recent sales
+- Log sale page where you pick a car from a grid and enter the date
+- History page showing past months and individual sales
 
-```mermaid
-flowchart TB
-  subgraph auth [Auth]
-    Login["/login"] --> Supabase[Supabase Auth]
-    Supabase --> Me["/api/me"]
-  end
-  subgraph admin [Admin Portal]
-    Cars["/admin/cars"] --> CarsAPI["/api/admin/cars"]
-    Slabs["/admin/slabs"] --> SlabsAPI["/api/admin/slabs"]
-    Officers["/admin/officers"] --> OfficersAPI["/api/admin/officers"]
-  end
-  subgraph salesOfficer [Sales Officer Portal]
-    Dashboard["/officer"] --> SalesAPI["/api/officer/sales"]
-    History["/officer/history"] --> HistoryAPI["/api/history"]
-  end
-  Me --> Cars
-  Me --> Dashboard
-  SalesAPI --> Calc["calculateIncentive"]
-  SlabsAPI --> Calc
-```
+Login is split so admins and officers go to different pages (`/login/admin` and `/login/officer`).
 
-## Environment Setup
+## How to run it locally
 
-1. Copy `.env.example` to `.env`
-2. Set:
-   - `DATABASE_URL` — PostgreSQL connection string
+1. Clone the repo
+2. Copy `.env.example` to `.env` and fill in your values:
+   - `DATABASE_URL` (postgres connection string)
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (needed for creating officers with passwords)
 
-## Local Development
+3. Run these commands:
 
 ```bash
 npm install
@@ -64,79 +48,65 @@ npm run prisma:seed
 npm run dev
 ```
 
-App starts at [http://localhost:3000](http://localhost:3000).
+4. Open http://localhost:3000 in your browser
 
-## Demo Accounts (Seed Data)
+## Test accounts
 
-Prisma seed creates these profiles. **You must also create matching users in Supabase Auth** (Authentication → Users) with the same emails and passwords:
+The seed script adds users to the database but you also need to create them in Supabase Auth (Authentication > Users) with the same email and password:
 
-| Role | Email | Notes |
-|------|-------|-------|
-| Admin | `admin@toyota.local` | Redirects to `/admin` |
-| Sales Officer | `officer@toyota.local` | Redirects to `/officer` |
+**Admin:** admin@toyota.local → goes to /admin
 
-On first login, the app links Supabase `authId` to the Prisma user by email if they differ.
+**Officer:** officer@toyota.local → goes to /officer
 
-## Pre-Submit Checklist
+Password is whatever you set in Supabase when creating the user.
 
-```bash
-npm run lint
-npm run build
-```
+## Deploying to Vercel
 
-Test responsive layouts at **375px**, **768px**, and **1280px** on login, sales officer dashboard, and admin slabs.
-
-## Deployment (Vercel)
-
-1. Push to GitHub and import the repo in Vercel
-2. Add environment variables from `.env.example`
-3. Run migrations against production DB **before** first deploy:
-
-   ```bash
-   npm run db:deploy
-   npm run prisma:seed   # optional, for demo data
-   ```
-
-4. Deploy — `postinstall` runs `prisma generate` automatically
-5. Add your live URL at the top of this README
-
-### Vercel env vars
-
-| Variable | Required |
-|----------|----------|
-| `DATABASE_URL` | Yes |
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes |
-
-## Screenshots
-
-_Add screenshots here after deploy:_
-
-1. Login page (dark theme)
-2. Admin — Slab Engine with tier cards
-3. Sales Officer — Live tracker + tier ladder
-
-## Useful Commands
+1. Push code to GitHub
+2. Import project on Vercel
+3. Add the same env variables from your `.env` file
+4. Run migrations on your production database before testing:
 
 ```bash
-npm run dev
-npm run lint
-npm run build
 npm run db:deploy
-npm run prisma:migrate
 npm run prisma:seed
 ```
 
-## Project Structure
+5. Deploy and update the live site link at the top of this readme
+
+## Project folders (rough idea)
 
 ```
-src/
-  app/           # Routes (admin, officer, login, API)
-  components/
-    glass/       # Design system primitives
-    incentive/   # LiveTracker, TierLadder, SlabCard
-    layout/      # Portal shell, sidebar, top bar
-  lib/
-    incentive.ts # Shared slab calculation
-    auth.ts      # Supabase + Prisma profile bridge
+src/app/          pages and API routes
+src/components/   UI components (glass design, charts, forms, etc)
+src/lib/          helper functions (incentive math, auth, validations)
+prisma/           database schema and seed file
 ```
+
+The incentive calculation logic is in `src/lib/incentive.ts` and both admin and officer pages use it so the numbers stay consistent.
+
+## Commands I use a lot
+
+```bash
+npm run dev              # start dev server
+npm run build            # check if it builds
+npm run lint             # run eslint
+npm run prisma:migrate   # run db migrations
+npm run prisma:seed      # reset/seed demo data
+npm run db:deploy        # deploy migrations (production)
+npm run cars:refresh-images   # refresh car images from CarWale
+```
+
+## Screenshots
+
+TODO: add screenshots after deploying
+- login page
+- admin slab editor
+- officer dashboard with chart
+- log sale page
+
+## Notes
+
+This was a learning project so the code might not be perfect everywhere. If something breaks check the browser console and terminal first lol.
+
+Made by Krishnanand G
