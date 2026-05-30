@@ -271,9 +271,14 @@ export default function AdminCarsPage() {
         </GlassCard>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cars.map((car) => (
-          <motion.div key={car.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            key={car.id}
+            className="h-full"
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.2 }}
+          >
             <GlassCard
               role="button"
               tabIndex={0}
@@ -284,7 +289,7 @@ export default function AdminCarsPage() {
                   startEdit(car);
                 }
               }}
-              className="cursor-pointer overflow-hidden border border-white/10 p-3 transition hover:border-white/20"
+              className="flex h-full cursor-pointer flex-col overflow-hidden border border-white/10 p-3 transition hover:border-white/20"
             >
               <Image
                 key={car.imageUrl}
@@ -293,19 +298,21 @@ export default function AdminCarsPage() {
                 width={664}
                 height={374}
                 unoptimized
-                className="h-44 w-full rounded-xl object-cover"
+                className="h-44 w-full shrink-0 rounded-xl object-cover"
               />
-              <div className="mt-3 space-y-2 px-1 pb-1">
-                <h3 className="text-base font-semibold text-foreground">{car.name}</h3>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-1 flex-col gap-2 px-1 pb-1">
+                <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug text-foreground">
+                  {car.name}
+                </h3>
+                <div className="flex min-h-[3.25rem] flex-wrap content-start gap-1.5">
                   <GlassBadge>{car.modelName}</GlassBadge>
                   {car.baseSuffix ? <GlassBadge>{car.baseSuffix}</GlassBadge> : null}
                   {car.variant ? <GlassBadge>{car.variant}</GlassBadge> : null}
                 </div>
-                <p className="min-h-10 text-sm leading-relaxed text-muted">
+                <p className="line-clamp-4 min-h-[5rem] flex-1 text-sm leading-relaxed text-muted">
                   {car.description || "No description added yet."}
                 </p>
-                <div className="flex gap-2 pt-1">
+                <div className="mt-auto flex gap-2 pt-2">
                   <GlassButton
                     type="button"
                     variant="danger"
