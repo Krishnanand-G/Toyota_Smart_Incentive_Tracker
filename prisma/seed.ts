@@ -1,5 +1,59 @@
-import { MonthlySaleStatus, Prisma, Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
+import { composeCarDisplayName } from "../src/lib/car-model-utils";
 import { prisma } from "../src/lib/prisma";
+
+const CAR_DEMAND: Record<string, number> = {
+  "urban-cruiser-hyryder-1-5-s-hybrid": 28,
+  "glanza-1-2-v-mt": 24,
+  "innova-crysta-2-4-gx-7str": 16,
+  "innova-hycross-2-0-zx-hybrid": 14,
+  "hilux-2-8-4x4-mt": 9,
+  "camry-hybrid-ecvt": 5,
+};
+
+type SeedOfficer = {
+  authId: string;
+  email: string;
+  fullName: string;
+  officerId: string;
+  photoUrl: string;
+  monthlyBase: number;
+  monthlyVariance: number;
+};
+
+function pickWeightedCar(carIds: string[]): string {
+  const weights = carIds.map((id) => CAR_DEMAND[id] ?? 1);
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < carIds.length; i += 1) {
+    roll -= weights[i];
+    if (roll <= 0) return carIds[i];
+  }
+  return carIds[carIds.length - 1];
+}
+
+function weekdaySaleDays(year: number, month: number, count: number): number[] {
+  const candidates: number[] = [];
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dow = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    if (dow !== 0) candidates.push(day);
+  }
+
+  const picked: number[] = [];
+  const pool = [...candidates];
+  while (picked.length < count && pool.length > 0) {
+    const index = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(index, 1)[0]);
+  }
+  return picked.sort((a, b) => a - b);
+}
+
+function saleTimestamp(year: number, month: number, day: number): Date {
+  const hour = 10 + Math.floor(Math.random() * 8);
+  const minute = Math.floor(Math.random() * 60);
+  return new Date(Date.UTC(year, month - 1, day, hour - 5, minute, 0, 0));
+}
 
 async function main() {
   const seedUsers = [
@@ -8,12 +62,6 @@ async function main() {
       email: "admin@toyota.local",
       fullName: "Demo Admin",
       role: Role.ADMIN,
-    },
-    {
-      authId: "00000000-0000-0000-0000-000000000002",
-      email: "officer@toyota.local",
-      fullName: "Demo Officer",
-      role: Role.OFFICER,
     },
   ];
 
@@ -25,41 +73,139 @@ async function main() {
     });
   }
 
-  const admin = await prisma.user.findUniqueOrThrow({ where: { authId: seedUsers[0].authId } });
-  const officer = await prisma.user.findUniqueOrThrow({ where: { authId: seedUsers[1].authId } });
-
-  const cars = [
+  const officers: SeedOfficer[] = [
     {
-      name: "Innova HyCross",
-      imageUrl: "https://images.unsplash.com/photo-1503376780353-7e6692767b70",
-      description: "Premium MPV for family and fleet buyers.",
-      sortOrder: 1,
+      authId: "00000000-0000-0000-0000-000000000003",
+      email: "krishnanand.g@toyota.local",
+      fullName: "Krishnanand G",
+      officerId: "SO-001",
+      photoUrl: "https://i.pravatar.cc/256?u=krishnanand-g",
+      monthlyBase: 15,
+      monthlyVariance: 3,
     },
     {
-      name: "Urban Cruiser Hyryder",
-      imageUrl: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8",
-      description: "Mid-size SUV with hybrid options.",
-      sortOrder: 2,
-    },
-    {
-      name: "Fortuner",
-      imageUrl: "https://images.unsplash.com/photo-1493238792000-8113da705763",
-      description: "Flagship SUV with strong rural/urban demand.",
-      sortOrder: 3,
-    },
-    {
-      name: "Glanza",
-      imageUrl: "https://images.unsplash.com/photo-1542362567-b07e54358753",
-      description: "City hatchback with steady monthly volume.",
-      sortOrder: 4,
+      authId: "00000000-0000-0000-0000-000000000002",
+      email: "officer@toyota.local",
+      fullName: "Demo Sales Officer",
+      officerId: "SO-002",
+      photoUrl: "https://i.pravatar.cc/256?u=demo-sales-officer",
+      monthlyBase: 8,
+      monthlyVariance: 2,
     },
   ];
 
+  await prisma.user.updateMany({
+    where: {
+      role: Role.OFFICER,
+      email: { notIn: officers.map((officer) => officer.email) },
+    },
+    data: { isActive: false, officerId: null },
+  });
+
+  const officerRecords = [];
+  for (const officer of officers) {
+    const record = await prisma.user.upsert({
+      where: { email: officer.email },
+      update: {
+        authId: officer.authId,
+        fullName: officer.fullName,
+        officerId: officer.officerId,
+        photoUrl: officer.photoUrl,
+        role: Role.OFFICER,
+        isActive: true,
+      },
+      create: {
+        authId: officer.authId,
+        email: officer.email,
+        fullName: officer.fullName,
+        officerId: officer.officerId,
+        photoUrl: officer.photoUrl,
+        role: Role.OFFICER,
+        isActive: true,
+      },
+    });
+    officerRecords.push({ ...officer, id: record.id });
+  }
+
+  const admin = await prisma.user.findUniqueOrThrow({ where: { authId: seedUsers[0].authId } });
+
+  const cars = [
+    {
+      id: "innova-crysta-2-4-gx-7str",
+      modelName: "Innova Crysta",
+      baseSuffix: "2.4 GX",
+      variant: "7Str",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/140809/innova-crysta-exterior-right-front-three-quarter-3.png?isig=0&q=80",
+      description:
+        "Reliable MPV with a strong chassis, up to seven seats, ample storage, and a robust diesel engine for family and fleet use.",
+    },
+    {
+      id: "innova-hycross-2-0-zx-hybrid",
+      modelName: "Innova HyCross",
+      baseSuffix: "2.0",
+      variant: "ZX Hybrid 7-Seater",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/115025/innova-hycross-exterior-right-front-three-quarter-74.png?isig=0&q=80",
+      description:
+        "Premium hybrid MPV with flexible seating, connected features, and strong demand across urban and highway markets.",
+    },
+    {
+      id: "urban-cruiser-hyryder-1-5-s-hybrid",
+      modelName: "Urban Cruiser Hyryder",
+      baseSuffix: "1.5",
+      variant: "S Hybrid",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/124027/hyryder-exterior-right-front-three-quarter-74.png?isig=0&q=80",
+      description:
+        "Compact SUV with strong hybrid efficiency, elevated ride height, and steady monthly volume in city showrooms.",
+    },
+    {
+      id: "glanza-1-2-v-mt",
+      modelName: "Glanza",
+      baseSuffix: "1.2",
+      variant: "V MT",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/112839/glanza-exterior-right-front-three-quarter-6.png?isig=0&q=80",
+      description:
+        "City-friendly hatchback with low running costs and consistent demand from first-time Toyota buyers.",
+    },
+    {
+      id: "camry-hybrid-ecvt",
+      modelName: "Camry",
+      baseSuffix: "Hybrid",
+      variant: "e-CVT",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/192443/camry-exterior-right-front-three-quarter-15.png?isig=0&q=80",
+      description:
+        "Premium hybrid sedan for executive buyers who want comfort, refinement, and strong brand pull.",
+    },
+    {
+      id: "hilux-2-8-4x4-mt",
+      modelName: "Hilux",
+      baseSuffix: "2.8",
+      variant: "4x4 MT",
+      imageUrl:
+        "https://imgd.aeplcdn.com/664x374/n/cw/ec/109265/hilux-exterior-right-front-three-quarter-44.png?isig=0&q=80",
+      description:
+        "Rugged 4x4 pickup with a 2.8L diesel engine, popular across semi-urban and commercial buyer segments.",
+    },
+  ];
+
+  await prisma.saleEntry.deleteMany();
+  await prisma.monthlySaleItem.deleteMany();
+  await prisma.monthlySale.deleteMany();
+  await prisma.carModel.updateMany({
+    data: { isActive: false, deletedAt: new Date() },
+  });
+
   for (const car of cars) {
+    const { id, ...fields } = car;
+    const name = composeCarDisplayName(fields.modelName, fields.baseSuffix, fields.variant);
     await prisma.carModel.upsert({
-      where: { id: `${car.name.toLowerCase().replaceAll(" ", "-")}` },
-      update: car,
-      create: { id: `${car.name.toLowerCase().replaceAll(" ", "-")}`, ...car },
+      where: { id },
+      update: { ...fields, name, isActive: true, deletedAt: null },
+      create: { id, ...fields, name },
     });
   }
 
@@ -73,37 +219,47 @@ async function main() {
     ],
   });
 
-  const carRows = await prisma.carModel.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
-  const sampleMonths = ["2026-01", "2026-02", "2026-03"];
-  for (const [index, monthKey] of sampleMonths.entries()) {
-    const items = carRows.map((car, i) => ({
-      carModelId: car.id,
-      units: i + 1 + index,
-    }));
-    const totalUnits = items.reduce((sum, item) => sum + item.units, 0);
-    await prisma.monthlySale.upsert({
-      where: { userId_monthKey: { userId: officer.id, monthKey } },
-      update: {
-        status: MonthlySaleStatus.SUBMITTED,
-        submittedAt: new Date(),
-        totalUnits,
-        totalIncentive: new Prisma.Decimal(totalUnits * 1400),
-      },
-      create: {
-        userId: officer.id,
-        monthKey,
-        status: MonthlySaleStatus.SUBMITTED,
-        submittedAt: new Date(),
-        totalUnits,
-        totalIncentive: new Prisma.Decimal(totalUnits * 1400),
-        items: {
-          create: items,
-        },
-      },
-    });
+  const carRows = await prisma.carModel.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
+  const carIds = carRows.map((car) => car.id);
+
+  const now = new Date();
+  const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const sampleMonths = ["2026-01", "2026-02", "2026-03", currentMonthKey];
+
+  for (const officer of officerRecords) {
+    for (const monthKey of sampleMonths) {
+      const [year, month] = monthKey.split("-").map(Number);
+      const isCurrentMonth = monthKey === currentMonthKey;
+      const monthProgress = isCurrentMonth ? now.getUTCDate() / 28 : 1;
+      const seasonalBoost = month === 3 ? 1.1 : month === 1 ? 0.92 : 1;
+      const targetCount = Math.max(
+        2,
+        Math.round(
+          (officer.monthlyBase +
+            Math.floor(Math.random() * (officer.monthlyVariance * 2 + 1)) -
+            officer.monthlyVariance) *
+            seasonalBoost *
+            monthProgress,
+        ),
+      );
+
+      const days = weekdaySaleDays(year, month, targetCount);
+      for (const day of days) {
+        await prisma.saleEntry.create({
+          data: {
+            userId: officer.id,
+            carModelId: pickWeightedCar(carIds),
+            soldAt: saleTimestamp(year, month, day),
+          },
+        });
+      }
+    }
   }
 
-  console.log(`Seed complete for users: ${admin.email}, ${officer.email}`);
+  console.log(`Seed complete for admin: ${admin.email}`);
+  console.log(
+    `Sales officers: ${officerRecords.map((officer) => `${officer.fullName} (${officer.officerId})`).join(", ")}`,
+  );
 }
 
 main()

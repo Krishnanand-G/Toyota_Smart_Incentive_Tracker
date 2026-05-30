@@ -1,6 +1,6 @@
 # Toyota Smart Incentive Tracker
 
-Production-style Toyota incentive tracking app with role-based auth, admin configuration engine, dynamic slab payouts, and a real-time officer calculation dashboard.
+Production-style Toyota incentive tracking app with role-based auth, admin configuration engine, dynamic slab payouts, and a real-time sales officer calculation dashboard.
 
 **Live URL:** _Add your Vercel deployment URL here_
 
@@ -16,13 +16,13 @@ Production-style Toyota incentive tracking app with role-based auth, admin confi
 
 | Role | Capabilities |
 |------|----------------|
-| **Admin** | Car inventory CRUD, dynamic slab engine, officer management |
-| **Officer** | Monthly volume entry, **live** incentive tracker, draft/save/submit, history |
+| **Admin** | Car inventory CRUD, dynamic slab engine, sales officer management |
+| **Sales Officer** | Monthly volume entry, **live** incentive tracker, draft/save/submit, history |
 
 - Secure role routing for `ADMIN` and `OFFICER`
 - Real-time payout calculation as volumes change (shared `calculateIncentive` logic)
 - Admin slab editor with tier cards and live preview probes
-- Officer/admin history APIs and views
+- Sales officer/admin history APIs and views
 
 ## Architecture
 
@@ -37,7 +37,7 @@ flowchart TB
     Slabs["/admin/slabs"] --> SlabsAPI["/api/admin/slabs"]
     Officers["/admin/officers"] --> OfficersAPI["/api/admin/officers"]
   end
-  subgraph officer [Officer Portal]
+  subgraph salesOfficer [Sales Officer Portal]
     Dashboard["/officer"] --> SalesAPI["/api/officer/sales"]
     History["/officer/history"] --> HistoryAPI["/api/history"]
   end
@@ -73,7 +73,7 @@ Prisma seed creates these profiles. **You must also create matching users in Sup
 | Role | Email | Notes |
 |------|-------|-------|
 | Admin | `admin@toyota.local` | Redirects to `/admin` |
-| Officer | `officer@toyota.local` | Redirects to `/officer` |
+| Sales Officer | `officer@toyota.local` | Redirects to `/officer` |
 
 On first login, the app links Supabase `authId` to the Prisma user by email if they differ.
 
@@ -84,7 +84,7 @@ npm run lint
 npm run build
 ```
 
-Test responsive layouts at **375px**, **768px**, and **1280px** on login, officer dashboard, and admin slabs.
+Test responsive layouts at **375px**, **768px**, and **1280px** on login, sales officer dashboard, and admin slabs.
 
 ## Deployment (Vercel)
 
@@ -114,7 +114,7 @@ _Add screenshots here after deploy:_
 
 1. Login page (dark theme)
 2. Admin — Slab Engine with tier cards
-3. Officer — Live tracker + tier ladder
+3. Sales Officer — Live tracker + tier ladder
 
 ## Useful Commands
 
