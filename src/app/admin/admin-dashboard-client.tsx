@@ -91,6 +91,11 @@ export function AdminDashboardClient({
     void loadDashboard();
   }, [range, monthKey, loadDashboard, initialRange, initialMonthKey]);
 
+  function handleMonthChange(value: string) {
+    setMonthKey(value);
+    setRange("month");
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -109,9 +114,7 @@ export function AdminDashboardClient({
                 {option.label}
               </GlassButton>
             ))}
-            {range === "month" ? (
-              <GlassMonthPicker value={monthKey} onChange={setMonthKey} />
-            ) : null}
+            <GlassMonthPicker value={monthKey} onChange={handleMonthChange} />
             {refreshing ? <span className="text-xs text-muted">Updating…</span> : null}
           </div>
         }
