@@ -43,7 +43,7 @@ export function CarModelPicker({ cars, value, onChange }: CarModelPickerProps) {
           No models match your search.
         </p>
       ) : (
-        <div className="grid max-h-[min(420px,50vh)] grid-cols-2 gap-2 overflow-y-auto pr-1 dark-scrollbar sm:grid-cols-3">
+        <div className="grid max-h-[min(420px,55vh)] w-full min-w-0 grid-cols-1 gap-2 overflow-y-auto pr-1 dark-scrollbar sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((car) => {
             const selected = car.id === value;
             return (

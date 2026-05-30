@@ -77,6 +77,7 @@ export function LogSalePageClient({
     <div className="space-y-6">
       <PageHeader
         badge="Log sale"
+        badgeVariant="amber"
         description="Record a unit sold this month. Pick the car, set the date, and submit."
         actions={<GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />}
       />

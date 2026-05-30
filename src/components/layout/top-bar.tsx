@@ -6,13 +6,11 @@ import { Menu } from "lucide-react";
 
 type TopBarProps = {
   title: string;
-  subtitle?: string;
-  portalLabel?: string;
   onMenuClick: () => void;
   className?: string;
 };
 
-export function TopBar({ title, subtitle, portalLabel, onMenuClick, className }: TopBarProps) {
+export function TopBar({ title, onMenuClick, className }: TopBarProps) {
   return (
     <header
       className={cn(
@@ -29,13 +27,7 @@ export function TopBar({ title, subtitle, portalLabel, onMenuClick, className }:
         >
           <Menu size={20} />
         </button>
-        <div className="min-w-0">
-          {portalLabel ? (
-            <p className="truncate text-[10px] uppercase tracking-wider text-muted">{portalLabel}</p>
-          ) : null}
-          <h1 className="truncate text-base font-semibold text-foreground">{title}</h1>
-          {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
-        </div>
+        <h1 className="truncate text-base font-semibold text-foreground">{title}</h1>
       </div>
       <SignOutButton compact />
     </header>

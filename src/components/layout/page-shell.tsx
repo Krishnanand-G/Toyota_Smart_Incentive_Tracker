@@ -8,7 +8,6 @@ import { useEffect, useState, type ReactNode } from "react";
 type PageShellProps = {
   portalLabel: string;
   pageTitle: string;
-  pageSubtitle?: string;
   navItems: NavItem[];
   children: ReactNode;
 };
@@ -22,13 +21,8 @@ function AmbientBackground() {
   );
 }
 
-export function PageShell({ portalLabel, pageTitle, pageSubtitle, navItems, children }: PageShellProps) {
+export function PageShell({ portalLabel, pageTitle, navItems, children }: PageShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const today = new Date().toLocaleDateString("en-GB", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
   useEffect(() => {
     function onResize() {
@@ -50,24 +44,9 @@ export function PageShell({ portalLabel, pageTitle, pageSubtitle, navItems, chil
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <TopBar
-            title={pageTitle}
-            subtitle={pageSubtitle}
-            portalLabel={portalLabel}
-            onMenuClick={() => setMobileOpen(true)}
-          />
+          <TopBar title={pageTitle} onMenuClick={() => setMobileOpen(true)} />
 
           <main className="glass-base min-h-[calc(100vh-8rem)] flex-1 rounded-glass p-5 sm:p-6 lg:min-h-[calc(100vh-3rem)] lg:p-8">
-            <div className="mb-6 hidden items-start justify-between lg:flex">
-              <div>
-                <p className="text-xs uppercase tracking-[0.15em] text-muted">{portalLabel}</p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{pageTitle}</h1>
-                {pageSubtitle ? <p className="mt-1 text-sm text-muted">{pageSubtitle}</p> : null}
-              </div>
-              <div className="glass-pill rounded-full px-3 py-1.5 font-mono text-xs text-muted">
-                {today}
-              </div>
-            </div>
             {children}
           </main>
         </div>

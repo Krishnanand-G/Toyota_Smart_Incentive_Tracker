@@ -26,3 +26,9 @@ export function isNavItemActive(pathname: string, item: NavItem) {
   }
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
+
+export function titleFromPath(pathname: string, navItems: NavItem[]) {
+  const matches = navItems.filter((item) => isNavItemActive(pathname, item));
+  if (!matches.length) return "Overview";
+  return matches.sort((a, b) => b.href.length - a.href.length)[0].label;
+}
