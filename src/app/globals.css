@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  input,
+  select,
+  textarea,
+  button {
+    color-scheme: dark;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  *:focus,
+  *:focus-visible,
+  *:active {
+    outline: none !important;
+    outline-offset: 0 !important;
+  }
+}
+
 :root {
   --background: #000000;
   --foreground: #fafafa;
@@ -25,14 +47,53 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
   min-height: 100vh;
   color: var(--foreground);
   background-color: var(--background);
+  color-scheme: dark;
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
   background-image:
     radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0, transparent 45%),
     radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.02) 0, transparent 40%);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.04);
+}
+
+/* Dark scrollbars (Chrome, Edge, Safari) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.04);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 ::selection {
@@ -69,16 +130,73 @@ body {
     color: var(--text-muted);
   }
 
+  .glass-input:focus,
   .glass-input:focus-visible {
     outline: none;
     border-color: rgba(249, 115, 22, 0.5);
     box-shadow: 0 0 0 3px var(--focus-ring);
   }
 
+  /* Native date/month pickers — dark calendar popup & controls */
+  .glass-input[type="date"],
+  .glass-input[type="month"],
+  .glass-input[type="datetime-local"],
+  .glass-input[type="time"],
+  input[type="date"].glass-input,
+  input[type="month"].glass-input {
+    color-scheme: dark;
+    accent-color: var(--accent-blue);
+  }
+
+  .glass-input[type="date"]::-webkit-calendar-picker-indicator,
+  .glass-input[type="month"]::-webkit-calendar-picker-indicator,
+  .glass-input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="date"].glass-input::-webkit-calendar-picker-indicator,
+  input[type="month"].glass-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.85;
+    filter: invert(0.85) brightness(1.1);
+  }
+
+  .glass-input[type="date"]::-webkit-datetime-edit,
+  .glass-input[type="month"]::-webkit-datetime-edit,
+  input[type="date"].glass-input::-webkit-datetime-edit,
+  input[type="month"].glass-input::-webkit-datetime-edit {
+    color: var(--foreground);
+  }
+
+  .glass-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .glass-input[type="month"]::-webkit-datetime-edit-fields-wrapper {
+    color: var(--foreground);
+  }
+
+  /* Dark select dropdowns */
+  select.glass-input,
+  .glass-input select {
+    color-scheme: dark;
+    accent-color: var(--accent-blue);
+  }
+
+  select.glass-input option {
+    background-color: #161616;
+    color: var(--foreground);
+  }
+
+  /* Number input spin buttons */
+  .glass-input[type="number"]::-webkit-inner-spin-button,
+  .glass-input[type="number"]::-webkit-outer-spin-button {
+    opacity: 0.7;
+    filter: invert(0.9);
+  }
+
+  .glass-input[type="number"] {
+    color-scheme: dark;
+  }
+
   .glass-section {
     border: 1px solid var(--glass-border);
     background: var(--glass-soft);
-    border-radius: 12px;
+    border-radius: 0;
   }
 
   .ambient-blob {
@@ -94,5 +212,45 @@ body {
 
   .text-foreground {
     color: var(--foreground);
+  }
+
+  .dark-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.04);
+  }
+
+  .dark-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Recharts draws a default focus ring on click */
+  .recharts-wrapper,
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible,
+  .recharts-surface,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible {
+    outline: none !important;
+  }
+
+  .recharts-tooltip-cursor,
+  .recharts-rectangle.recharts-tooltip-cursor,
+  .recharts-active-bar,
+  .recharts-bar-rectangle {
+    stroke: none !important;
   }
 }
