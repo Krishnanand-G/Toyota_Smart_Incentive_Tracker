@@ -1,6 +1,6 @@
 "use client";
 
-import { ToyotaModelCombobox } from "@/components/admin";
+import { SearchableCombobox, ToyotaModelCombobox } from "@/components/admin";
 import {
   GlassAlert,
   GlassBadge,
@@ -13,6 +13,7 @@ import {
 } from "@/components/glass";
 import { ConfirmDialog } from "@/components/incentive";
 import { composeCarDisplayName } from "@/lib/car-model-utils";
+import type { CarwaleTrimOptions } from "@/lib/carwale-variants";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -52,6 +53,7 @@ export default function AdminCarsPage() {
   const [carwaleSource, setCarwaleSource] = useState<{ image?: boolean; description?: boolean } | null>(
     null,
   );
+  const [trimOptions, setTrimOptions] = useState<CarwaleTrimOptions | null>(null);
 
   const loadCars = useCallback(async (q?: string) => {
     if (!hasLoaded.current) setLoading(true);
@@ -84,6 +86,29 @@ export default function AdminCarsPage() {
 
   const submitLabel = useMemo(() => (editing ? "Save changes" : "Add car model"), [editing]);
 
+  const baseSuffixOptions = useMemo(() => {
+    if (!trimOptions) return form.baseSuffix ? [form.baseSuffix] : [];
+    const options = [...trimOptions.baseSuffixes];
+    if (form.baseSuffix && !options.includes(form.baseSuffix)) {
+      options.unshift(form.baseSuffix);
+    }
+    return options;
+  }, [trimOptions, form.baseSuffix]);
+
+  const variantOptions = useMemo(() => {
+    if (!trimOptions) return form.variant ? [form.variant] : [];
+    const baseKey = form.baseSuffix.trim() || "Standard";
+    const options = [...(trimOptions.variantsByBase[baseKey] ?? [])];
+    if (form.variant && !options.includes(form.variant)) {
+      options.unshift(form.variant);
+    }
+    return options;
+  }, [trimOptions, form.baseSuffix, form.variant]);
+
+  const baseSuffixValue =
+    form.baseSuffix.trim() ||
+    (trimOptions?.baseSuffixes.includes("Standard") ? "Standard" : form.baseSuffix);
+
   function startCreate() {
     setEditing(null);
     setForm(emptyForm);
@@ -91,6 +116,7 @@ export default function AdminCarsPage() {
     skipCarwaleAutofill.current = false;
     descriptionTouched.current = false;
     setCarwaleSource(null);
+    setTrimOptions(null);
     setOpen(true);
   }
 
@@ -107,16 +133,29 @@ export default function AdminCarsPage() {
     skipCarwaleAutofill.current = true;
     descriptionTouched.current = true;
     setCarwaleSource(car.imageUrl.includes("aeplcdn.com") ? { image: true } : null);
+    setTrimOptions(null);
     setOpen(true);
+    void loadCarwaleData(car.modelName, { autofill: false });
   }
 
-  async function loadCarwaleData(modelName: string) {
+  async function loadCarwaleData(modelName: string, options?: { autofill?: boolean }) {
     if (!modelName.trim()) return;
+    const autofill = options?.autofill ?? true;
     setFetchingCarwale(true);
     try {
       const res = await fetch(`/api/admin/carwale-image?model=${encodeURIComponent(modelName.trim())}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return;
+
+      if (Array.isArray(data.baseSuffixes) && data.variantsByBase) {
+        setTrimOptions({
+          baseSuffixes: data.baseSuffixes,
+          variantsByBase: data.variantsByBase,
+          trims: Array.isArray(data.trims) ? data.trims : [],
+        });
+      }
+
+      if (!autofill) return;
 
       const nextSource: { image?: boolean; description?: boolean } = {};
       setForm((prev) => {
@@ -294,24 +333,38 @@ export default function AdminCarsPage() {
               <label className="mb-1.5 block text-sm text-muted">Toyota model</label>
               <ToyotaModelCombobox
                 value={form.modelName}
-                onChange={(modelName) => setForm((prev) => ({ ...prev, modelName }))}
+                onChange={(modelName) => {
+                  setTrimOptions(null);
+                  setForm((prev) => ({ ...prev, modelName, baseSuffix: "", variant: "" }));
+                }}
                 required
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm text-muted">Base suffix</label>
-              <GlassInput
-                value={form.baseSuffix}
-                onChange={(e) => setForm((prev) => ({ ...prev, baseSuffix: e.target.value }))}
-                placeholder="e.g. 2.8"
+              <SearchableCombobox
+                value={baseSuffixValue}
+                onChange={(value) => {
+                  const baseSuffix = value === "Standard" ? "" : value;
+                  setForm((prev) => ({ ...prev, baseSuffix, variant: "" }));
+                }}
+                options={baseSuffixOptions}
+                loading={fetchingCarwale}
+                disabled={!form.modelName.trim()}
+                placeholder={form.modelName.trim() ? "Search trims..." : "Pick a model first"}
+                emptyMessage="No trims found — type your own"
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm text-muted">Variant</label>
-              <GlassInput
+              <SearchableCombobox
                 value={form.variant}
-                onChange={(e) => setForm((prev) => ({ ...prev, variant: e.target.value }))}
-                placeholder="e.g. Legender 4x4 AT"
+                onChange={(variant) => setForm((prev) => ({ ...prev, variant }))}
+                options={variantOptions}
+                loading={fetchingCarwale}
+                disabled={!form.modelName.trim()}
+                placeholder={form.modelName.trim() ? "Search variants..." : "Pick a model first"}
+                emptyMessage="No variants found — type your own"
               />
             </div>
 
@@ -366,17 +419,22 @@ export default function AdminCarsPage() {
               ) : null}
             </div>
             {form.imageUrl ? (
-              <Image
-                src={form.imageUrl}
-                alt="Preview"
-                width={640}
-                height={260}
-                className="h-36 w-full rounded-xl object-cover"
-              />
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                <div className="relative aspect-[664/374] w-full">
+                  <Image
+                    src={form.imageUrl}
+                    alt="Preview"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 512px) 100vw, 512px"
+                    className="object-contain p-2"
+                  />
+                </div>
+              </div>
             ) : null}
           </div>
 
-          <div className="mt-4 flex shrink-0 justify-end gap-2 border-t border-white/10 bg-[var(--glass-elevated)] pt-4">
+          <div className="mt-4 flex shrink-0 justify-end gap-2 border-t border-white/10 bg-[var(--glass-elevated)] pt-4 pb-1">
             <GlassButton type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </GlassButton>

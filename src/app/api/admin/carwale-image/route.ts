@@ -1,5 +1,7 @@
 import { fetchCarwaleDataForModel, modelNameToCarwaleSlug } from "@/lib/carwale-image";
+import { buildTrimOptions, mergeTrimOptions } from "@/lib/carwale-variants";
 import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -21,18 +23,22 @@ export async function GET(request: Request) {
 
   try {
     const data = await fetchCarwaleDataForModel(model);
-    if (!data?.imageUrl && !data?.description) {
-      return NextResponse.json(
-        { error: "No CarWale data found for this model.", slug },
-        { status: 404 },
-      );
-    }
+    const existingCars = await prisma.carModel.findMany({
+      where: { modelName: { equals: model, mode: "insensitive" }, isActive: true },
+      select: { baseSuffix: true, variant: true },
+    });
+
+    const trimOptions = mergeTrimOptions(
+      data?.trimOptions ?? buildTrimOptions([]),
+      existingCars,
+    );
 
     return NextResponse.json({
       model,
       slug,
-      imageUrl: data.imageUrl,
-      description: data.description,
+      imageUrl: data?.imageUrl ?? null,
+      description: data?.description ?? null,
+      ...trimOptions,
       source: "carwale",
     });
   } catch {

@@ -1,3 +1,9 @@
+import {
+  buildTrimOptions,
+  extractCarwaleVersionsFromHtml,
+  type CarwaleTrimOptions,
+} from "@/lib/carwale-variants";
+
 const CARWALE_SLUGS: Record<string, string> = {
   "innova hycross": "innova-hycross",
   "innova crysta": "innova-crysta",
@@ -19,6 +25,7 @@ const CARWALE_SLUGS: Record<string, string> = {
 export type CarwaleModelData = {
   imageUrl: string | null;
   description: string | null;
+  trimOptions: CarwaleTrimOptions;
 };
 
 function decodeHtml(value: string) {
@@ -110,6 +117,7 @@ export function extractCarwaleDataFromHtml(html: string): CarwaleModelData {
   return {
     imageUrl: extractCarwaleImageFromHtml(html),
     description: extractCarwaleDescriptionFromHtml(html),
+    trimOptions: buildTrimOptions(extractCarwaleVersionsFromHtml(html)),
   };
 }
 
@@ -141,8 +149,9 @@ export async function fetchCarwaleDataForModel(modelName: string): Promise<Carwa
 
   const html = await fetchCarwalePageHtml(slug);
   if (!html) {
-    dataCache.set(slug, { data: { imageUrl: null, description: null }, expires: Date.now() + 5 * 60 * 1000 });
-    return null;
+    const empty = { imageUrl: null, description: null, trimOptions: buildTrimOptions([]) };
+    dataCache.set(slug, { data: empty, expires: Date.now() + 5 * 60 * 1000 });
+    return empty;
   }
 
   const data = extractCarwaleDataFromHtml(html);

@@ -11,4 +11,5 @@ export { RecentActivityFeed } from "./recent-activity-feed";
 export { SalesTrendChart } from "./sales-trend-chart";
 export { SlabScrubber } from "./slab-scrubber";
 export { SlabTimeline } from "./slab-timeline";
+export { SearchableCombobox } from "./searchable-combobox";
 export { ToyotaModelCombobox } from "./toyota-model-combobox";
