@@ -22,24 +22,34 @@ model User {
   authId       String        @unique
   email        String        @unique
   fullName     String?
+  officerId    String?       @unique
+  photoUrl     String?
+  passwordHash String?
   role         Role          @default(OFFICER)
   isActive     Boolean       @default(true)
   monthlySales MonthlySale[]
+  saleEntries  SaleEntry[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  @@index([role, isActive])
 }
 
 model CarModel {
   id          String            @id @default(cuid())
   name        String
+  modelName   String
+  baseSuffix  String?
+  variant     String?
   imageUrl    String
   description String?
   isActive    Boolean           @default(true)
-  sortOrder   Int               @default(0)
   saleItems   MonthlySaleItem[]
+  saleEntries SaleEntry[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   deletedAt   DateTime?
+
+  @@index([isActive, name])
 }
 
 model IncentiveSlab {
@@ -79,4 +89,17 @@ model MonthlySaleItem {
   updatedAt  DateTime   @updatedAt
 
   @@unique([monthlyId, carModelId])
+}
+
+model SaleEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carModelId String
+  carModel   CarModel @relation(fields: [carModelId], references: [id])
+  soldAt     DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId, soldAt])
+  @@index([soldAt])
 }
