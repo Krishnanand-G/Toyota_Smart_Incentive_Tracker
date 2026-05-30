@@ -49,7 +49,6 @@ export default function AdminCarsPage() {
   const skipCarwaleAutofill = useRef(false);
   const descriptionTouched = useRef(false);
   const [fetchingCarwale, setFetchingCarwale] = useState(false);
-  const [refreshingAll, setRefreshingAll] = useState(false);
   const [carwaleSource, setCarwaleSource] = useState<{ image?: boolean; description?: boolean } | null>(
     null,
   );
@@ -109,22 +108,6 @@ export default function AdminCarsPage() {
     descriptionTouched.current = true;
     setCarwaleSource(car.imageUrl.includes("aeplcdn.com") ? { image: true } : null);
     setOpen(true);
-  }
-
-  async function refreshAllCarwaleImages() {
-    setRefreshingAll(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/admin/cars/refresh-images", { method: "POST", cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Failed to refresh images");
-      if (Array.isArray(data.cars)) setCars(data.cars);
-      else await loadCars(searchQuery);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to refresh images from CarWale");
-    } finally {
-      setRefreshingAll(false);
-    }
   }
 
   async function loadCarwaleData(modelName: string) {
@@ -222,14 +205,6 @@ export default function AdminCarsPage() {
               <p className="font-mono text-xl font-semibold text-foreground">{cars.length}</p>
               <p className="text-xs text-muted">Active models</p>
             </div>
-            <GlassButton
-              type="button"
-              variant="secondary"
-              disabled={refreshingAll || !cars.length}
-              onClick={() => refreshAllCarwaleImages()}
-            >
-              {refreshingAll ? "Refreshing..." : "Refresh all from CarWale"}
-            </GlassButton>
             <GlassButton type="button" variant="accent" onClick={startCreate}>
               Add model
             </GlassButton>
@@ -260,7 +235,18 @@ export default function AdminCarsPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cars.map((car) => (
           <motion.div key={car.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
-            <GlassCard className="overflow-hidden border border-white/10 p-3 transition hover:border-white/20">
+            <GlassCard
+              role="button"
+              tabIndex={0}
+              onClick={() => startEdit(car)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  startEdit(car);
+                }
+              }}
+              className="cursor-pointer overflow-hidden border border-white/10 p-3 transition hover:border-white/20"
+            >
               <Image
                 key={car.imageUrl}
                 src={car.imageUrl}
@@ -283,17 +269,12 @@ export default function AdminCarsPage() {
                 <div className="flex gap-2 pt-1">
                   <GlassButton
                     type="button"
-                    variant="secondary"
-                    className="!px-3 !py-1.5 !text-xs"
-                    onClick={() => startEdit(car)}
-                  >
-                    Edit
-                  </GlassButton>
-                  <GlassButton
-                    type="button"
                     variant="danger"
                     className="!px-3 !py-1.5 !text-xs"
-                    onClick={() => setDeleteId(car.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteId(car.id);
+                    }}
                   >
                     Remove
                   </GlassButton>
