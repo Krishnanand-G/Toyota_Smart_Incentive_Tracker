@@ -14,7 +14,7 @@ export function TopBar({ title, onMenuClick, className }: TopBarProps) {
   return (
     <header
       className={cn(
-        "glass-base sticky top-4 z-20 flex items-center justify-between gap-4 rounded-glass px-4 py-3 lg:hidden",
+        "sticky top-14 z-20 flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-3 lg:hidden",
         className,
       )}
     >
@@ -22,12 +22,14 @@ export function TopBar({ title, onMenuClick, className }: TopBarProps) {
         <button
           type="button"
           onClick={onMenuClick}
-          className="glass-pill rounded-lg p-2 text-muted hover:text-foreground"
+          className="rounded-md p-2 text-accent-primary transition hover:bg-surface-hover"
           aria-label="Open navigation menu"
         >
           <Menu size={20} />
         </button>
-        <h1 className="truncate text-base font-semibold text-foreground">{title}</h1>
+        <h1 className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
+          {title}
+        </h1>
       </div>
       <SignOutButton compact />
     </header>

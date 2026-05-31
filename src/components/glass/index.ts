@@ -6,5 +6,6 @@ export { GlassDatePicker } from "./glass-date-picker";
 export { GlassInput } from "./glass-input";
 export { GlassModal } from "./glass-modal";
 export { GlassMonthPicker } from "./glass-month-picker";
+export { MobileBottomSheet } from "./mobile-bottom-sheet";
 export { GlassSkeleton } from "./glass-skeleton";
 export { PageHeader } from "./page-header";

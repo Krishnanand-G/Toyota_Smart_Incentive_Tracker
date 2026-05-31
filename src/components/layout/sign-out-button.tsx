@@ -27,11 +27,11 @@ export function SignOutButton({ className, compact = false }: SignOutButtonProps
       onClick={handleSignOut}
       disabled={isSigningOut}
       className={cn(
-        "glass-pill inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground disabled:opacity-60",
+        "inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted transition hover:border-accent-primary hover:text-accent-primary disabled:opacity-60",
         className,
       )}
     >
-      <LogOut size={16} />
+      <LogOut size={14} />
       {!compact && (isSigningOut ? "Signing out..." : "Sign out")}
     </button>
   );

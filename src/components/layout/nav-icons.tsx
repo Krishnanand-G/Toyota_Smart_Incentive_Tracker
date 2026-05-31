@@ -13,7 +13,15 @@ const navIconMap: Record<NavIconName, LucideIcon> = {
   plus: PlusCircle,
 };
 
-export function NavIcon({ name, className }: { name: NavIconName; className?: string }) {
+export function NavIcon({
+  name,
+  className,
+  size = 18,
+}: {
+  name: NavIconName;
+  className?: string;
+  size?: number;
+}) {
   const Icon = navIconMap[name];
-  return <Icon size={18} className={className} />;
+  return <Icon size={size} className={className} />;
 }

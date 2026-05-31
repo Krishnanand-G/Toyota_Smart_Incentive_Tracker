@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { AssetIntegrityGuard } from "@/components/asset-integrity-guard";
 import "./globals.css";
 
 const sans = Inter({
@@ -25,10 +26,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${mono.variable} h-full antialiased dark`}
-      style={{ colorScheme: "dark" }}
+      className={`${sans.variable} ${mono.variable} h-full antialiased`}
+      style={{ colorScheme: "light" }}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AssetIntegrityGuard>{children}</AssetIntegrityGuard>
+      </body>
     </html>
   );
 }
