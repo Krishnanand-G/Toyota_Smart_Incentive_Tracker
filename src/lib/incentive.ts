@@ -1,12 +1,4 @@
-import type { SlabShape } from "@/lib/incentive-types";
-
-export type IncentiveResult = {
-  totalUnits: number;
-  slabLabel: string;
-  perUnitAmount: number;
-  totalPayout: number;
-  nextTierDeltaUnits: number | null;
-};
+import type { SlabShape, PayoutResult } from "@/lib/incentive-types";
 
 export function getSlabIndex(totalUnits: number, slabs: SlabShape[]): number {
   const ordered = [...slabs].sort((a, b) => a.minUnits - b.minUnits);
@@ -16,22 +8,23 @@ export function getSlabIndex(totalUnits: number, slabs: SlabShape[]): number {
     (slab) =>
       totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits),
   );
-  return index >= 0 ? index : 0;
+  return index;
 }
 
-export function calculateIncentive(totalUnits: number, slabs: SlabShape[]): IncentiveResult {
+export function calculateIncentive(totalUnits: number, slabs: SlabShape[]): PayoutResult {
   const ordered = [...slabs].sort((a, b) => a.minUnits - b.minUnits);
-  const current =
-    ordered.find((slab) => totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits)) ??
-    ordered[0];
+  const current = ordered.find(
+    (slab) => totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits),
+  );
 
   if (!current) {
+    const next = ordered.find((slab) => slab.minUnits > totalUnits);
     return {
       totalUnits,
-      slabLabel: "No slab configured",
+      slabLabel: ordered.length ? "No tier" : "No slab configured",
       perUnitAmount: 0,
       totalPayout: 0,
-      nextTierDeltaUnits: null,
+      nextTierDeltaUnits: next ? Math.max(next.minUnits - totalUnits, 0) : null,
     };
   }
 

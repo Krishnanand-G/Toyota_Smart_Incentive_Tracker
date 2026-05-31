@@ -9,6 +9,12 @@ export function parseMonthKey(monthKey: string): { year: number; month: number }
   return { year: Number(yearStr), month: Number(monthStr) };
 }
 
+export function isValidMonthKey(monthKey: string): boolean {
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return false;
+  const { year, month } = parseMonthKey(monthKey);
+  return Number.isFinite(year) && year >= 1970 && month >= 1 && month <= 12;
+}
+
 export function monthBoundsUtc(monthKey: string): { start: Date; end: Date } {
   const { year, month } = parseMonthKey(monthKey);
   const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));

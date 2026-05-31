@@ -7,3 +7,10 @@ export const createSaleEntrySchema = z.object({
 });
 
 export type CreateSaleEntryInput = z.infer<typeof createSaleEntrySchema>;
+
+export const updateSaleEntrySchema = z.object({
+  carModelId: z.string().min(1),
+  soldAt: z.union([z.string().min(1), z.coerce.date()]),
+});
+
+export type UpdateSaleEntryInput = z.infer<typeof updateSaleEntrySchema>;
