@@ -30,6 +30,11 @@ export async function GET() {
 }
 
 export async function DELETE() {
+  const profile = await getAuthProfile();
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set(PORTAL_ROLE_COOKIE, "", { maxAge: 0, path: "/" });
   return response;

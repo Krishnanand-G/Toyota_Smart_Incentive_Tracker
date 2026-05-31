@@ -2,15 +2,9 @@ import { calculateIncentive } from "@/lib/incentive";
 import type { SlabShape } from "@/lib/incentive-types";
 import { monthBoundsUtc, monthKeyFromDate } from "@/lib/sale-entry-utils";
 
-export type DashboardRange = "7d" | "month";
+import type { AdminSaleEntryRow } from "@/lib/admin-types";
 
-export type SaleEntryRow = {
-  id: string;
-  soldAt: Date;
-  userId: string;
-  user: { fullName: string | null; email: string };
-  carModel: { name: string };
-};
+export type DashboardRange = "7d" | "month";
 
 export type TrendPoint = { date: string; cumulativeUnits: number; dailyUnits: number };
 
@@ -95,7 +89,7 @@ export function buildDailySalesSeriesFromCounts(
   return series;
 }
 
-export function aggregateByModel(entries: SaleEntryRow[]): ModelBreakdown[] {
+export function aggregateByModel(entries: AdminSaleEntryRow[]): ModelBreakdown[] {
   const counts = new Map<string, number>();
   for (const entry of entries) {
     const name = entry.carModel.name;
@@ -122,7 +116,7 @@ export function aggregateByOfficerFromCounts(
 }
 
 export function aggregateByOfficer(
-  entries: SaleEntryRow[],
+  entries: AdminSaleEntryRow[],
   slabs: SlabShape[],
 ): OfficerRank[] {
   const byOfficer = new Map<string, { name: string; units: number }>();
@@ -148,7 +142,7 @@ export function aggregateByOfficer(
     .slice(0, 10);
 }
 
-export function buildRecentActivity(entries: SaleEntryRow[], limit = 15): RecentActivity[] {
+export function buildRecentActivity(entries: AdminSaleEntryRow[], limit = 15): RecentActivity[] {
   return entries.slice(0, limit).map((entry) => ({
     id: entry.id,
     officerName: entry.user.fullName ?? entry.user.email,

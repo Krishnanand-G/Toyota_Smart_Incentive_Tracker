@@ -5,8 +5,8 @@ import {
   computeDashboardKpisFromCounts,
   resolveDateRange,
   type DashboardRange,
-  type SaleEntryRow,
 } from "@/lib/admin-dashboard-utils";
+import type { AdminSaleEntryRow } from "@/lib/admin-types";
 import { getIncentiveSlabShapes } from "@/lib/incentive-slabs";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
@@ -104,7 +104,7 @@ export async function loadAdminDashboardData(range: DashboardRange, monthKey?: s
     salesTrend: buildDailySalesSeriesFromCounts(countsByDay, start, end),
     salesByModel,
     officerLeaderboard,
-    recentActivity: buildRecentActivity(recentEntries as SaleEntryRow[]),
+    recentActivity: buildRecentActivity(recentEntries as AdminSaleEntryRow[]),
   };
 }
 

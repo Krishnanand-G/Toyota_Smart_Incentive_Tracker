@@ -1,52 +1,61 @@
 import { Prisma, Role } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
+import { jsonError, zodValidationResponse } from "@/lib/api-errors";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import { ensureIncentiveSlabs } from "@/lib/admin-slabs-data";
 import { calculateIncentive } from "@/lib/incentive";
 import { slabBatchSchema } from "@/lib/validations/slab";
 
 export async function GET() {
-  const auth = await requireRole(Role.ADMIN);
-  if (auth.error) return auth.error;
+  try {
+    const auth = await requireRole(Role.ADMIN);
+    if (auth.error) return auth.error;
 
-  const slabs = await prisma.incentiveSlab.findMany({
-    orderBy: { minUnits: "asc" },
-  });
+    const slabs = await ensureIncentiveSlabs();
 
-  return NextResponse.json(slabs);
+    return NextResponse.json(slabs);
+  } catch {
+    return jsonError("Could not load incentive slabs", 500);
+  }
 }
 
 export async function PUT(request: Request) {
-  const auth = await requireRole(Role.ADMIN);
-  if (auth.error) return auth.error;
+  try {
+    const auth = await requireRole(Role.ADMIN);
+    if (auth.error) return auth.error;
 
-  const payload = await request.json();
-  const parsed = slabBatchSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.incentiveSlab.deleteMany();
-    for (const slab of parsed.data) {
-      await tx.incentiveSlab.create({
-        data: {
-          minUnits: slab.minUnits,
-          maxUnits: slab.maxUnits,
-          perUnitAmount: new Prisma.Decimal(slab.perUnitAmount),
-          label: slab.label ?? null,
-        },
-      });
+    const payload = await request.json();
+    const parsed = slabBatchSchema.safeParse(payload);
+    if (!parsed.success) {
+      return zodValidationResponse(parsed.error);
     }
-  });
 
-  revalidateTag("incentive-slabs");
+    await prisma.$transaction(async (tx) => {
+      await tx.incentiveSlab.deleteMany();
+      for (const slab of parsed.data) {
+        await tx.incentiveSlab.create({
+          data: {
+            minUnits: slab.minUnits,
+            maxUnits: slab.maxUnits,
+            perUnitAmount: new Prisma.Decimal(slab.perUnitAmount),
+            label: slab.label ?? null,
+          },
+        });
+      }
+    });
 
-  const slabs = await prisma.incentiveSlab.findMany({
-    orderBy: { minUnits: "asc" },
-  });
+    revalidateTag("incentive-slabs");
+    revalidateTag("admin-dashboard");
+    revalidateTag("officer-dashboard");
+    revalidateTag("sale-entries");
 
-  const preview = [0, 5, 10, 20, 30].map((units) => calculateIncentive(units, slabs));
-  return NextResponse.json({ slabs, preview });
+    const slabs = await ensureIncentiveSlabs();
+
+    const preview = [0, 5, 10, 20, 30].map((units) => calculateIncentive(units, slabs));
+    return NextResponse.json({ slabs, preview });
+  } catch {
+    return jsonError("Could not save incentive slabs", 500);
+  }
 }
