@@ -1,6 +1,9 @@
 import { Prisma, Role } from "@prisma/client";
 import { composeCarDisplayName } from "../src/lib/car-model-utils";
+import { hashPassword } from "../src/lib/password";
 import { prisma } from "../src/lib/prisma";
+
+const DEMO_OFFICER_PASSWORD = "officer123";
 
 const CAR_DEMAND: Record<string, number> = {
   "urban-cruiser-hyryder-1-5-s-hybrid": 28,
@@ -16,7 +19,6 @@ type SeedOfficer = {
   email: string;
   fullName: string;
   officerId: string;
-  photoUrl: string;
   monthlyBase: number;
   monthlyVariance: number;
 };
@@ -79,7 +81,6 @@ async function main() {
       email: "krishnanand.g@toyota.local",
       fullName: "Krishnanand G",
       officerId: "SO-001",
-      photoUrl: "https://i.pravatar.cc/256?u=krishnanand-g",
       monthlyBase: 15,
       monthlyVariance: 3,
     },
@@ -88,7 +89,6 @@ async function main() {
       email: "officer@toyota.local",
       fullName: "Demo Sales Officer",
       officerId: "SO-002",
-      photoUrl: "https://i.pravatar.cc/256?u=demo-sales-officer",
       monthlyBase: 8,
       monthlyVariance: 2,
     },
@@ -103,6 +103,7 @@ async function main() {
   });
 
   const officerRecords = [];
+  const demoPasswordHash = await hashPassword(DEMO_OFFICER_PASSWORD);
   for (const officer of officers) {
     const record = await prisma.user.upsert({
       where: { email: officer.email },
@@ -110,22 +111,32 @@ async function main() {
         authId: officer.authId,
         fullName: officer.fullName,
         officerId: officer.officerId,
-        photoUrl: officer.photoUrl,
         role: Role.OFFICER,
         isActive: true,
+        passwordHash: demoPasswordHash,
       },
       create: {
         authId: officer.authId,
         email: officer.email,
         fullName: officer.fullName,
         officerId: officer.officerId,
-        photoUrl: officer.photoUrl,
         role: Role.OFFICER,
         isActive: true,
+        passwordHash: demoPasswordHash,
       },
     });
     officerRecords.push({ ...officer, id: record.id });
   }
+
+  await prisma.user.updateMany({
+    where: {
+      OR: [
+        { photoUrl: { contains: "pravatar.cc" } },
+        { photoUrl: { contains: "ui-avatars.com" } },
+      ],
+    },
+    data: { photoUrl: null },
+  });
 
   const admin = await prisma.user.findUniqueOrThrow({ where: { authId: seedUsers[0].authId } });
 
@@ -212,10 +223,10 @@ async function main() {
   await prisma.incentiveSlab.deleteMany();
   await prisma.incentiveSlab.createMany({
     data: [
-      { minUnits: 0, maxUnits: 9, perUnitAmount: new Prisma.Decimal(1000), label: "Starter" },
-      { minUnits: 10, maxUnits: 19, perUnitAmount: new Prisma.Decimal(1400), label: "Growth" },
-      { minUnits: 20, maxUnits: 29, perUnitAmount: new Prisma.Decimal(1800), label: "Momentum" },
-      { minUnits: 30, maxUnits: null, perUnitAmount: new Prisma.Decimal(2200), label: "Champion" },
+      { minUnits: 0, maxUnits: 9, perUnitAmount: new Prisma.Decimal(1000), label: "Standard" },
+      { minUnits: 10, maxUnits: 19, perUnitAmount: new Prisma.Decimal(1400), label: "Target" },
+      { minUnits: 20, maxUnits: 29, perUnitAmount: new Prisma.Decimal(1800), label: "Stretch" },
+      { minUnits: 30, maxUnits: null, perUnitAmount: new Prisma.Decimal(2200), label: "Excellence" },
     ],
   });
 

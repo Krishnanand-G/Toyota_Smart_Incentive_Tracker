@@ -24,7 +24,9 @@ model User {
   fullName     String?
   officerId    String?       @unique
   photoUrl     String?
-  passwordHash String?
+  passwordHash      String?
+  passwordPlain     String?
+  passwordStoredAt  DateTime?
   role         Role          @default(OFFICER)
   isActive     Boolean       @default(true)
   monthlySales MonthlySale[]

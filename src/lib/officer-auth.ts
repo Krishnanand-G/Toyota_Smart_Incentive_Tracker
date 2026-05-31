@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
 import { createAdminClient, hasSupabaseAdmin } from "@/lib/supabase/admin";
 
 type OfficerAuthProfile = {
@@ -20,7 +19,20 @@ export async function getSupabaseAuthStatus(authId: string) {
     return { linked: false, configured: true };
   }
 
-  return { linked: true, configured: true, email: data.user.email ?? null };
+  return {
+    linked: true,
+    configured: true,
+    email: data.user.email ?? null,
+  };
+}
+
+export async function officerHasPassword(officer: {
+  passwordHash: string | null;
+  authId: string;
+}) {
+  if (officer.passwordHash) return true;
+  const authStatus = await getSupabaseAuthStatus(officer.authId);
+  return authStatus.linked;
 }
 
 export async function createSupabaseOfficerUser(
@@ -51,6 +63,12 @@ export async function createSupabaseOfficerUser(
   return { ok: true as const, authId: data.user.id };
 }
 
+export async function deleteSupabaseOfficerUser(authId: string) {
+  if (!hasSupabaseAdmin()) return;
+  const supabase = createAdminClient();
+  await supabase.auth.admin.deleteUser(authId);
+}
+
 export async function updateSupabaseOfficerUser(
   authId: string,
   updates: {
@@ -68,6 +86,7 @@ export async function updateSupabaseOfficerUser(
   }
 
   const supabase = createAdminClient();
+
   const { error } = await supabase.auth.admin.updateUserById(authId, {
     ...(updates.email ? { email: updates.email } : {}),
     ...(updates.password ? { password: updates.password } : {}),
@@ -120,10 +139,3 @@ export async function provisionOrUpdateOfficerAuth(
   return { ok: true as const, authId: created.authId };
 }
 
-export async function persistOfficerPassword(userId: string, password: string) {
-  const passwordHash = await hashPassword(password);
-  await prisma.user.update({
-    where: { id: userId },
-    data: { passwordHash },
-  });
-}
