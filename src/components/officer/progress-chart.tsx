@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { chartColors, chartTooltipStyle } from "@/lib/chart-theme";
 import { formatChartDayLabel, formatMonthDisplay } from "@/lib/date-picker-utils";
 import {
   CartesianGrid,
@@ -12,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 
-export type ChartPoint = { date: string; cumulativeUnits: number };
+import type { ChartPoint } from "@/lib/sale-entry-utils";
 
 type ProgressChartProps = {
   data: ChartPoint[];
@@ -24,11 +25,13 @@ function formatDayLabel(date: string) {
   return formatChartDayLabel(date);
 }
 
+const axisTick = { fill: chartColors.axis, fontSize: 12 };
+
 export function ProgressChart({ data, monthKey, totalUnits }: ProgressChartProps) {
   const hasSales = totalUnits > 0;
 
   return (
-    <GlassCard className="border border-white/10 p-4 sm:p-5">
+    <GlassCard className="p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Monthly progress</h3>
@@ -37,46 +40,42 @@ export function ProgressChart({ data, monthKey, totalUnits }: ProgressChartProps
       </div>
 
       {!hasSales ? (
-        <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-muted">
+        <div className="flex h-48 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted lg:h-56">
           Log your first sale to see progress over time.
         </div>
       ) : (
-        <div className="h-56 w-full min-w-0">
+        <div className="h-48 w-full min-w-0 lg:h-56">
           <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
-            <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+            <LineChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+              <CartesianGrid stroke={chartColors.grid} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickFormatter={formatDayLabel}
                 interval="preserveStartEnd"
-                tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
+                tick={axisTick}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
+                tick={axisTick}
                 axisLine={false}
                 tickLine={false}
+                width={32}
               />
               <Tooltip
-                cursor={{ stroke: "rgba(249, 115, 22, 0.25)", strokeWidth: 1 }}
-                contentStyle={{
-                  background: "rgba(20,20,22,0.95)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                }}
+                cursor={{ stroke: chartColors.cursor, strokeWidth: 1 }}
+                contentStyle={chartTooltipStyle}
                 labelFormatter={(label) => formatDayLabel(String(label))}
                 formatter={(value) => [`${value} units`, "Cumulative"]}
               />
               <Line
                 type="monotone"
                 dataKey="cumulativeUnits"
-                stroke="#f97316"
+                stroke={chartColors.primary}
                 strokeWidth={2.5}
                 dot={false}
-                activeDot={{ r: 5, fill: "#f97316" }}
+                activeDot={{ r: 5, fill: chartColors.primary }}
               />
             </LineChart>
           </ResponsiveContainer>

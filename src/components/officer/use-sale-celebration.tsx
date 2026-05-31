@@ -1,7 +1,7 @@
 "use client";
 
 import { CelebrationDialog } from "@/components/incentive";
-import type { LogSaleSuccessResult } from "@/components/officer/log-sale-form";
+import type { LogSaleSuccessResult } from "@/lib/sale-types";
 import { formatUtcDate } from "@/lib/date-picker-utils";
 import { useState } from "react";
 

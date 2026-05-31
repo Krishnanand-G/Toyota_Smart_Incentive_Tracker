@@ -1,17 +1,12 @@
 "use client";
 
-import { CarModelPicker, type CarModelOption } from "@/components/officer/car-model-picker";
+import { CarModelPicker } from "@/components/officer/car-model-picker";
 import { GlassAlert, GlassButton, GlassDatePicker } from "@/components/glass";
+import { getApiErrorMessage } from "@/lib/api-errors";
+import type { CarModelOption, LogSaleSuccessResult } from "@/lib/sale-types";
 import { formatDateDisplay } from "@/lib/date-picker-utils";
 import { formatDateInput, monthBoundsUtc } from "@/lib/sale-entry-utils";
 import { FormEvent, useEffect, useState } from "react";
-
-export type LogSaleSuccessResult = {
-  entry: { carName: string; soldAt: string };
-  tierUnlocked: boolean;
-  tierLabel: string | null;
-  payout: { slabLabel: string; perUnitAmount: number; totalPayout: number };
-};
 
 type LogSaleFormProps = {
   monthKey: string;
@@ -46,15 +41,21 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ carModelId, soldAt, monthKey }),
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as {
+        entry?: { carName: string; soldAt: string };
+        tierUnlocked?: boolean;
+        tierLabel?: string | null;
+        payout?: LogSaleSuccessResult["payout"];
+        error?: unknown;
+      };
       if (!res.ok) {
-        throw new Error(data?.error ?? "Could not log sale");
+        throw new Error(getApiErrorMessage(data, "Could not log sale"));
       }
       onSuccess({
-        entry: { carName: data.entry.carName, soldAt: data.entry.soldAt },
-        tierUnlocked: data.tierUnlocked,
-        tierLabel: data.tierLabel,
-        payout: data.payout,
+        entry: { carName: data.entry!.carName, soldAt: data.entry!.soldAt },
+        tierUnlocked: data.tierUnlocked ?? false,
+        tierLabel: data.tierLabel ?? null,
+        payout: data.payout!,
       });
       setCarModelId("");
     } catch (err) {
@@ -80,7 +81,7 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-foreground">1. Choose the car sold</h3>
-        <p className="text-xs text-muted">Tap a model below — selected card is highlighted in orange.</p>
+        <p className="text-xs text-muted">Tap a model to select — tap again to clear.</p>
         <CarModelPicker cars={cars} value={carModelId} onChange={setCarModelId} />
       </section>
 
@@ -101,7 +102,12 @@ export function LogSaleForm({ monthKey, cars, onSuccess, submitLabel = "Log sale
 
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
 
-      <GlassButton type="submit" variant="accent" className="w-full !py-3" disabled={submitting || !carModelId}>
+      <GlassButton
+        type="submit"
+        variant="accent"
+        className="officer-touch w-full !min-h-[48px] !py-3 !text-sm"
+        disabled={submitting || !carModelId}
+      >
         {submitting ? "Saving..." : submitLabel}
       </GlassButton>
     </form>

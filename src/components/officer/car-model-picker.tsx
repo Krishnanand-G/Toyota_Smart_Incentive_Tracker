@@ -5,20 +5,23 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
-export type CarModelOption = {
-  id: string;
-  name: string;
-  imageUrl: string;
-};
+import type { CarModelOption } from "@/lib/sale-types";
 
 type CarModelPickerProps = {
   cars: CarModelOption[];
   value: string;
   onChange: (carModelId: string) => void;
+  variant?: "default" | "compact";
 };
 
-export function CarModelPicker({ cars, value, onChange }: CarModelPickerProps) {
+export function CarModelPicker({
+  cars,
+  value,
+  onChange,
+  variant = "default",
+}: CarModelPickerProps) {
   const [query, setQuery] = useState("");
+  const compact = variant === "compact";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -34,35 +37,45 @@ export function CarModelPicker({ cars, value, onChange }: CarModelPickerProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search models..."
-          className="glass-input w-full rounded-xl px-3 py-2 text-sm text-foreground"
+          className="glass-input w-full rounded-md px-3 py-2.5 text-sm text-foreground"
         />
       ) : null}
 
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-muted">
+        <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
           No models match your search.
         </p>
       ) : (
-        <div className="grid max-h-[min(420px,55vh)] w-full min-w-0 grid-cols-1 gap-2 overflow-y-auto pr-1 dark-scrollbar sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={cn(
+            "grid w-full min-w-0 gap-2.5 p-0.5",
+            compact
+              ? "grid-cols-2 sm:grid-cols-3"
+              : "max-h-[min(320px,45vh)] grid-cols-1 overflow-y-auto dark-scrollbar sm:grid-cols-2 lg:max-h-[min(420px,55vh)] lg:grid-cols-3",
+          )}
+        >
           {filtered.map((car) => {
             const selected = car.id === value;
             return (
               <button
                 key={car.id}
                 type="button"
-                onClick={() => onChange(car.id)}
-                className={cn(
-                  "text-left transition",
-                  selected && "rounded-xl ring-2 ring-orange-400/60 ring-offset-2 ring-offset-transparent",
-                )}
+                onClick={() => onChange(selected ? "" : car.id)}
+                className="text-left transition"
               >
                 <GlassCard
                   className={cn(
-                    "flex h-full flex-col gap-2 border p-2 transition hover:border-white/25",
-                    selected ? "border-orange-400/40 bg-orange-500/10" : "border-white/10",
+                    "flex h-full flex-col gap-2 border-2 transition hover:border-accent-primary",
+                    compact ? "p-2" : "p-2.5 lg:p-2",
+                    selected ? "border-accent-primary bg-red-50" : "border-border",
                   )}
                 >
-                  <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-black/40 p-1">
+                  <div
+                    className={cn(
+                      "flex items-center justify-center rounded-md bg-background-muted p-1",
+                      compact ? "aspect-[3/2]" : "aspect-[3/2] lg:aspect-[4/3]",
+                    )}
+                  >
                     <Image
                       src={car.imageUrl}
                       alt={car.name}
@@ -72,7 +85,9 @@ export function CarModelPicker({ cars, value, onChange }: CarModelPickerProps) {
                       className="h-full w-full object-contain"
                     />
                   </div>
-                  <p className="line-clamp-2 text-xs font-medium leading-snug text-foreground">{car.name}</p>
+                  <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+                    {car.name}
+                  </p>
                 </GlassCard>
               </button>
             );

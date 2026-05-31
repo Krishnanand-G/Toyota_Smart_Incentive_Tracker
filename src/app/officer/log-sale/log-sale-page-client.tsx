@@ -3,27 +3,94 @@
 import { LogSaleForm } from "@/components/officer/log-sale-form";
 import { useSaleCelebration } from "@/components/officer/use-sale-celebration";
 import { GlassAlert, GlassBadge, GlassCard, GlassMonthPicker, PageHeader } from "@/components/glass";
-import type { CarModelOption } from "@/components/officer/car-model-picker";
+import type { CarModelOption, OfficerSaleEntryDisplay } from "@/lib/sale-types";
 import type { PayoutResult } from "@/lib/incentive-types";
 import { formatMonthDisplay, formatUtcDate } from "@/lib/date-picker-utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type SaleEntryRow = {
-  id: string;
-  carName: string;
-  carImageUrl: string;
-  soldAt: string;
-};
-
 type LogSalePageClientProps = {
   initialMonthKey: string;
   initialCars: CarModelOption[];
-  initialEntries: SaleEntryRow[];
+  initialEntries: OfficerSaleEntryDisplay[];
   initialPayout: PayoutResult;
   initialTotalUnits: number;
 };
+
+function MonthStatsCard({
+  totalUnits,
+  payout,
+  className,
+}: {
+  totalUnits: number;
+  payout: PayoutResult;
+  className?: string;
+}) {
+  return (
+    <GlassCard className={`border border-border p-4 ${className ?? ""}`}>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted">This month</p>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <p className="font-mono text-2xl font-bold text-foreground">{totalUnits}</p>
+          <p className="text-xs text-muted">units sold</p>
+        </div>
+        <div className="text-right">
+          <GlassBadge variant="blue" className="max-w-full truncate">
+            {payout.slabLabel}
+          </GlassBadge>
+          <p className="mt-1 text-xs text-muted">current tier</p>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <span className="text-sm text-muted">Est. payout</span>
+        <span className="font-mono text-lg font-semibold text-accent-primary">
+          ₹{payout.totalPayout.toLocaleString()}
+        </span>
+      </div>
+    </GlassCard>
+  );
+}
+
+function LoggedEntriesCard({ entries }: { entries: OfficerSaleEntryDisplay[] }) {
+  return (
+    <GlassCard className="border border-border p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground">Logged this month</h3>
+        <Link href="/officer/history" className="text-xs text-accent-primary hover:underline">
+          Full history
+        </Link>
+      </div>
+      {!entries.length ? (
+        <p className="text-sm text-muted">No sales yet for this month.</p>
+      ) : (
+        <ul className="max-h-48 space-y-2 overflow-y-auto pr-1 dark-scrollbar lg:max-h-64">
+          {entries.slice(0, 8).map((entry) => (
+            <li
+              key={entry.id}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface-row py-2.5 pl-2 pr-3"
+            >
+              <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-background-muted p-0.5">
+                <Image
+                  src={entry.carImageUrl}
+                  alt={entry.carName}
+                  width={56}
+                  height={40}
+                  unoptimized
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{entry.carName}</p>
+                <p className="text-xs text-muted">{formatUtcDate(entry.soldAt)}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </GlassCard>
+  );
+}
 
 export function LogSalePageClient({
   initialMonthKey,
@@ -79,13 +146,21 @@ export function LogSalePageClient({
         badge="Log sale"
         badgeVariant="amber"
         description="Record a unit sold this month. Pick the car, set the date, and submit."
-        actions={<GlassMonthPicker value={monthKey} onChange={setMonthKey} className="!py-2 !text-sm" />}
+        actions={
+          <GlassMonthPicker
+            value={monthKey}
+            onChange={setMonthKey}
+            className="w-full !py-2.5 !text-sm lg:w-auto"
+          />
+        }
       />
 
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <GlassCard className="border border-white/10 p-4 sm:p-6 lg:col-span-2">
+      <MonthStatsCard totalUnits={totalUnits} payout={payout} className="lg:hidden" />
+
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3">
+        <GlassCard className="order-2 border border-border p-4 sm:p-6 lg:order-1 lg:col-span-2">
           <p className="mb-4 text-xs text-muted">
             Logging for <span className="font-medium text-foreground">{formatMonthDisplay(monthKey)}</span>
             {refreshing ? " · updating…" : null}
@@ -99,60 +174,9 @@ export function LogSalePageClient({
           />
         </GlassCard>
 
-        <div className="space-y-4">
-          <GlassCard className="border border-white/10 p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted">This month</p>
-            <p className="mt-2 font-mono text-3xl font-bold text-foreground">{totalUnits}</p>
-            <p className="text-sm text-muted">units sold</p>
-            <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-muted">Current tier</span>
-                <GlassBadge variant="blue">{payout.slabLabel}</GlassBadge>
-              </div>
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-muted">Est. payout</span>
-                <span className="font-mono font-semibold text-orange-400">
-                  ₹{payout.totalPayout.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="border border-white/10 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-foreground">Logged this month</h3>
-              <Link href="/officer/history" className="text-xs text-orange-400 hover:underline">
-                Full history
-              </Link>
-            </div>
-            {!entries.length ? (
-              <p className="text-sm text-muted">No sales yet for this month.</p>
-            ) : (
-              <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 dark-scrollbar">
-                {entries.slice(0, 8).map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] p-2"
-                  >
-                    <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-black/40 p-0.5">
-                      <Image
-                        src={entry.carImageUrl}
-                        alt={entry.carName}
-                        width={56}
-                        height={40}
-                        unoptimized
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-foreground">{entry.carName}</p>
-                      <p className="text-[11px] text-muted">{formatUtcDate(entry.soldAt)}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </GlassCard>
+        <div className="order-3 space-y-4 lg:order-2">
+          <MonthStatsCard totalUnits={totalUnits} payout={payout} className="hidden lg:block" />
+          <LoggedEntriesCard entries={entries} />
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { LogSaleForm, type LogSaleSuccessResult } from "@/components/officer/log-sale-form";
-import type { CarModelOption } from "@/components/officer/car-model-picker";
+import { LogSaleForm } from "@/components/officer/log-sale-form";
+import type { CarModelOption, LogSaleSuccessResult } from "@/lib/sale-types";
 import { GlassModal } from "@/components/glass";
 
 type LogSaleModalProps = {
