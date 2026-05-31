@@ -1,45 +1,150 @@
 # Toyota Smart Incentive Tracker
 
-Hey! This is a web app I made for tracking Toyota car sales and calculating incentives for sales officers.
+**Task 2 submission — Smart Incentive Calculator with Dynamic Slab Admin Panel**  
+**Nippon Toyota — SDE Internship Round 2**
 
-Basically admins can add cars, set up payout tiers (slabs), and manage officers. Officers log their sales and see how much incentive money they might get based on how many cars they sold that month.
+A web app where **admins** configure Toyota car models and incentive payout slabs, and **sales officers** log monthly sales and see their tier + estimated payout update in real time.
 
-**Live site:** put your vercel link here when you deploy
+| | |
+|---|---|
+| **Live app** | https://toyota-smart-incentive-tracker.vercel.app |
+| **GitHub** | https://github.com/Krishnanand-G/Toyota_Smart_Incentive_Tracker |
+| **Author** | Krishnanand G — B.Tech CSE, 2026 |
 
-## What I used
+---
 
-- Next.js 14 with TypeScript
-- Tailwind CSS for styling (dark theme)
-- Supabase for login stuff
-- Prisma + PostgreSQL for the database
-- Framer Motion for some animations
-- Recharts for graphs on the dashboard
+## How this maps to the task
 
-## Main features
+### Role A — Admin Portal (configuration engine)
 
-**Admin side (`/admin`)**
-- Dashboard with sales stats
-- Add/edit/delete car models (with images from CarWale)
-- Configure incentive slabs (different payout rates for different unit ranges)
-- Create and manage sales officer accounts
+| Requirement | What I built |
+|---|---|
+| Car inventory (add / edit / delete) | `/admin/cars` — model name, base suffix, variant, image |
+| Dynamic slab engine | `/admin/slabs` — tiered ranges with ₹ per unit, drag/reorder style panel |
+| Update ranges anytime | Saved to PostgreSQL; officer dashboards pick up new slabs |
+| Clean admin dashboard | `/admin` — stats, charts, officer leaderboard |
 
-**Sales officer side (`/officer`)**
-- Dashboard with metrics, progress chart, tier ladder, and recent sales
-- Log sale page where you pick a car from a grid and enter the date
-- History page showing past months and individual sales
+### Role B — Sales Officer Portal (calculation dashboard)
 
-Login is split so admins and officers go to different pages (`/login/admin` and `/login/officer`).
+| Requirement | What I built |
+|---|---|
+| Secure login | Separate pages: `/login/admin` and `/login/officer` (RBAC) |
+| Select month + log sales per model | `/officer/log-sale` — pick car, set date, log each sale |
+| Real-time tracker | `/officer` — live tier, payout estimate, progress chart, tier ladder |
+| Monthly history | `/officer/history` — past months with per-sale breakdown |
 
-## How to run it locally
+---
 
-1. Clone the repo
-2. Copy `.env.example` to `.env` and fill in your values:
-   - `DATABASE_URL` (postgres connection string)
+## Tech stack
+
+- **Frontend:** Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend:** Next.js API routes
+- **Database:** PostgreSQL (Supabase) + Prisma ORM
+- **Auth:** Supabase Auth + app-level roles in the database
+- **Charts:** Recharts
+- **Deploy:** Vercel
+- **Storage:** Supabase Storage (officer profile photos on live site)
+
+---
+
+## Screenshots
+
+Add PNG/JPG files under `docs/screenshots/` and they will show up here.
+
+| # | File name (suggested) | What to capture |
+|---|---|---|
+| 1 | `01-home-portal.png` | Home page — Admin vs Officer portal choice |
+| 2 | `02-admin-login.png` | Admin login page |
+| 3 | `03-admin-dashboard.png` | Admin dashboard with metrics / charts |
+| 4 | `04-admin-cars.png` | Car inventory — add/edit car models |
+| 5 | `05-admin-slabs.png` | **Important** — Dynamic slab panel with tier ranges and ₹/unit |
+| 6 | `06-admin-officers.png` | Sales officer management list |
+| 7 | `07-officer-login.png` | Officer login page |
+| 8 | `08-officer-dashboard.png` | **Important** — Officer dashboard: tier, payout, chart, tier ladder |
+| 9 | `09-officer-log-sale.png` | **Important** — Logging a sale (car picker + date) |
+| 10 | `10-officer-history.png` | Monthly history expanded with individual sales |
+| 11 | `11-mobile-officer.png` | Same officer screen on **phone width** (proves responsive UI) |
+
+### Preview (replace paths after you add files)
+
+![Home portal](./docs/screenshots/01-home-portal.png)
+![Admin slab panel](./docs/screenshots/05-admin-slabs.png)
+![Officer dashboard](./docs/screenshots/08-officer-dashboard.png)
+![Log sale](./docs/screenshots/09-officer-log-sale.png)
+![Mobile view](./docs/screenshots/11-mobile-officer.png)
+
+**Tip:** Use your **production URL** (`toyota-smart-incentive-tracker.vercel.app`), not preview deploy links. Hide demo passwords in screenshots if you can.
+
+---
+
+## Demo login (live site)
+
+Create matching users in **Supabase Auth** and the app database (see setup below).
+
+| Role | URL | Email (seed default) |
+|---|---|---|
+| Admin | `/login/admin` | `admin@toyota.local` |
+| Officer | `/login/officer` | `officer@toyota.local` or `krishnanand.g@toyota.local` |
+
+Password = whatever you set in Supabase Auth when creating the user.
+
+On the live site, demo hints show if `NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS=true` is set on Vercel.
+
+---
+
+## Incentive logic (short explanation)
+
+Slabs are stored in the **`IncentiveSlab`** table. Example default tiers:
+
+| Units sold (month) | Tier | ₹ per car |
+|---|---|---|
+| 0–9 | Foundation | 1,000 |
+| 10–19 | Achiever | 1,400 |
+| 20–29 | Performer | 1,800 |
+| 30+ | Elite | 2,200 |
+
+When an officer logs a sale, the app counts **total units that month**, finds the matching slab, and calculates payout. The same helper (`src/lib/incentive.ts`) is used on admin and officer pages so numbers stay consistent.
+
+---
+
+## Database schema (persistence)
+
+PostgreSQL via Prisma:
+
+| Table | Purpose |
+|---|---|
+| `User` | Admins & officers — email, role, officer ID, photo |
+| `CarModel` | Sellable Toyota models |
+| `IncentiveSlab` | Admin-defined tier ranges + payout rates |
+| `SaleEntry` | Each logged sale (officer, car, date) |
+| `MonthlySale` / `MonthlySaleItem` | Monthly summary structures |
+
+Auth passwords live in **Supabase Auth**. App roles and business data live in **PostgreSQL**.
+
+---
+
+## Project structure
+
+```
+src/app/              Pages + API routes (/api/admin, /api/officer, /api/auth)
+src/components/       UI (admin panels, officer dashboard, glass design system)
+src/lib/              Incentive math, auth, validations, data loaders
+prisma/               schema.prisma, migrations, seed.ts
+docs/screenshots/     Put submission screenshots here
+```
+
+---
+
+## Run locally
+
+1. Clone the repo  
+2. Copy `.env.example` → `.env` and fill in:
+   - `DATABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (needed for creating officers with passwords)
+   - `SUPABASE_SERVICE_ROLE_KEY`
 
-3. Run these commands:
+3. Install and set up:
 
 ```bash
 npm install
@@ -48,65 +153,46 @@ npm run prisma:seed
 npm run dev
 ```
 
-4. Open http://localhost:3000 in your browser
+4. Open http://localhost:3000  
+5. Create the same emails in **Supabase → Authentication → Users**
 
-## Test accounts
+---
 
-The seed script adds users to the database but you also need to create them in Supabase Auth (Authentication > Users) with the same email and password:
+## Deploy (Vercel + Supabase)
 
-**Admin:** admin@toyota.local → goes to /admin
-
-**Officer:** officer@toyota.local → goes to /officer
-
-Password is whatever you set in Supabase when creating the user.
-
-## Deploying to Vercel
-
-1. Push code to GitHub
-2. Import project on Vercel
-3. Add the same env variables from your `.env` file
-4. Run migrations on your production database before testing:
+1. Push to GitHub → import on Vercel  
+2. Add all env vars from `.env`  
+3. Use Supabase **Transaction pooler** for `DATABASE_URL` (port **6543**) and append `?pgbouncer=true`  
+4. On your machine, run against production DB:
 
 ```bash
 npm run db:deploy
 npm run prisma:seed
 ```
 
-5. Deploy and update the live site link at the top of this readme
+5. Supabase → **Authentication → URL Configuration** — add your `.vercel.app` URL + `http://localhost:3000`
 
-## Project folders (rough idea)
+---
 
-```
-src/app/          pages and API routes
-src/components/   UI components (glass design, charts, forms, etc)
-src/lib/          helper functions (incentive math, auth, validations)
-prisma/           database schema and seed file
-```
-
-The incentive calculation logic is in `src/lib/incentive.ts` and both admin and officer pages use it so the numbers stay consistent.
-
-## Commands I use a lot
+## Useful commands
 
 ```bash
-npm run dev              # start dev server
-npm run build            # check if it builds
-npm run lint             # run eslint
-npm run prisma:migrate   # run db migrations
-npm run prisma:seed      # reset/seed demo data
-npm run db:deploy        # deploy migrations (production)
-npm run cars:refresh-images   # refresh car images from CarWale
+npm run dev            # local dev server
+npm run build          # production build check
+npm run lint           # ESLint
+npm run db:deploy      # apply migrations to remote DB
+npm run prisma:seed    # demo cars, slabs, users, sample sales
 ```
 
-## Screenshots
+---
 
-TODO: add screenshots after deploying
-- login page
-- admin slab editor
-- officer dashboard with chart
-- log sale page
+## Notes for reviewers
 
-## Notes
+- **RBAC:** Admins cannot access `/officer` routes and vice versa (middleware + role checks).
+- **Errors:** API routes return JSON errors instead of crashing silently.
+- **Responsive:** Mobile layouts use grids and collapsible sections (slabs, history, tier ladder).
+- **Deployment:** Live URL tested for login, log sale, history, admin slab edits, and car CRUD.
 
-This was a learning project so the code might not be perfect everywhere. If something breaks check the browser console and terminal first lol.
+---
 
-Made by Krishnanand G
+Built by **Krishnanand G** for the Nippon Toyota SDE internship task.
