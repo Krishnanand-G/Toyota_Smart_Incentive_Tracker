@@ -1,7 +1,7 @@
 # Toyota Smart Incentive Tracker
 
-**Task 2 submission — Smart Incentive Calculator with Dynamic Slab Admin Panel**  
-**Nippon Toyota — SDE Internship Round 2**
+**Task 2 submission, Smart Incentive Calculator with Dynamic Slab Admin Panel**  
+**Nippon Toyota, SDE Internship Round 2**
 
 A web app where **admins** configure Toyota car models and incentive payout slabs, and **sales officers** log monthly sales and see their tier + estimated payout update in real time.
 
