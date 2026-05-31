@@ -181,34 +181,6 @@ npm run dev
 
 ---
 
-## Deploy (Vercel + Supabase)
-
-1. Push to GitHub → import on Vercel  
-2. Add all env vars from `.env`  
-3. Use Supabase **Transaction pooler** for `DATABASE_URL` (port **6543**) and append `?pgbouncer=true`  
-4. On your machine, run against production DB:
-
-```bash
-npm run db:deploy
-npm run prisma:seed
-```
-
-5. Supabase → **Authentication → URL Configuration** — add your `.vercel.app` URL + `http://localhost:3000`
-
----
-
-## Useful commands
-
-```bash
-npm run dev            # local dev server
-npm run build          # production build check
-npm run lint           # ESLint
-npm run db:deploy      # apply migrations to remote DB
-npm run prisma:seed    # demo cars, slabs, users, sample sales
-```
-
----
-
 ## Notes for reviewers
 
 - **RBAC:** Admins cannot access `/officer` routes and vice versa (middleware + role checks).
