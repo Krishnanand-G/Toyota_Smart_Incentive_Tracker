@@ -4,6 +4,8 @@ import { getActiveCars } from "@/lib/catalog-cache";
 import { currentMonthKey } from "@/lib/date-picker-utils";
 import { getOfficerHistoryMonths } from "@/lib/officer-history-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function OfficerHistoryPage() {
   const profile = await getAuthProfile();
   const [initialMonths, initialCars] = await Promise.all([

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Pencil, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type OfficerHistoryClientProps = {
   initialMonths: OfficerHistoryMonth[];
@@ -65,7 +65,7 @@ export function OfficerHistoryClient({
     setRefreshing(true);
     setError(null);
     try {
-      const res = await fetch("/api/history");
+      const res = await fetch("/api/history", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load history");
       setMonths((await res.json()) as OfficerHistoryMonth[]);
     } catch (err) {
@@ -74,6 +74,10 @@ export function OfficerHistoryClient({
       setRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    void reloadHistory();
+  }, [reloadHistory]);
 
   const totals = useMemo(() => {
     const allUnits = months.reduce((sum, m) => sum + m.totalUnits, 0);

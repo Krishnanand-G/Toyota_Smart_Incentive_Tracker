@@ -1,5 +1,5 @@
 import { Role } from "@prisma/client";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { firstZodFieldMessage, jsonError } from "@/lib/api-errors";
 import { requireRole } from "@/lib/auth";
@@ -85,6 +85,9 @@ export async function POST(request: Request) {
     revalidateTag("officer-dashboard");
     revalidateTag(`officer-${auth.profile.id}`);
     revalidateTag("sale-entries");
+    revalidatePath("/officer");
+    revalidatePath("/officer/history");
+    revalidatePath("/officer/log-sale");
 
     return NextResponse.json({
       entry: {

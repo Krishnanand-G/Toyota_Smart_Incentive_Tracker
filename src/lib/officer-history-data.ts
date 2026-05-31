@@ -44,7 +44,7 @@ export async function getOfficerHistoryMonths(
 
   const [monthRows, slabShapes, saleEntries] = await Promise.all([
     prisma.$queryRaw<MonthCountRow[]>`
-      SELECT to_char("soldAt", 'YYYY-MM') AS month_key, COUNT(*)::int AS units
+      SELECT to_char("soldAt" AT TIME ZONE 'UTC', 'YYYY-MM') AS month_key, COUNT(*)::int AS units
       FROM "SaleEntry"
       WHERE "userId" = ${userId}
       GROUP BY 1
