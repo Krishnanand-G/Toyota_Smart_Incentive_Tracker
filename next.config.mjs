@@ -17,6 +17,7 @@ const nextConfig = {
       { protocol: "https", hostname: "imgd.aeplcdn.com" },
       { protocol: "https", hostname: "stimg.cardekho.com" },
       { protocol: "https", hostname: "*.cardekho.com" },
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },
 };

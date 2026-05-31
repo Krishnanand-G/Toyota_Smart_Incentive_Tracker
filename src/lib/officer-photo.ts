@@ -25,3 +25,7 @@ export function resolveOfficerPhotoUrl(photoUrl: string | null | undefined): str
 export function isLocalOfficerUpload(photoUrl: string): boolean {
   return photoUrl.startsWith("/uploads/officers/");
 }
+
+export function isSupabaseOfficerUpload(photoUrl: string): boolean {
+  return photoUrl.includes(".supabase.co/storage/v1/object/public/");
+}

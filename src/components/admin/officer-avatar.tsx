@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageLightbox } from "@/components/glass/image-lightbox";
-import { isLocalOfficerUpload, resolveOfficerPhotoUrl } from "@/lib/officer-photo";
+import { isLocalOfficerUpload, isSupabaseOfficerUpload, resolveOfficerPhotoUrl } from "@/lib/officer-photo";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
 import Image from "next/image";
@@ -60,7 +60,7 @@ export function OfficerAvatar({
         fill
         className="object-cover"
         sizes="256px"
-        unoptimized={isLocalOfficerUpload(resolvedPhoto)}
+        unoptimized={isLocalOfficerUpload(resolvedPhoto) || isSupabaseOfficerUpload(resolvedPhoto)}
         onError={() => setImageFailed(true)}
       />
     );
