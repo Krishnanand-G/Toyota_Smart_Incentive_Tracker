@@ -4,6 +4,7 @@ import { BrandHeader } from "@/components/layout/brand-header";
 import type { MobileShellVariant } from "@/components/layout/portal-layout";
 import { Sidebar } from "@/components/layout/sidebar";
 import type { NavItem } from "@/components/layout/nav-config";
+import type { OfficerHeaderProfile } from "@/components/officer/officer-header-identity";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -13,6 +14,7 @@ type PageShellProps = {
   navItems: NavItem[];
   children: ReactNode;
   mobileShell?: MobileShellVariant;
+  officerProfile?: OfficerHeaderProfile | null;
 };
 
 export function PageShell({
@@ -21,6 +23,7 @@ export function PageShell({
   navItems,
   children,
   mobileShell = "default",
+  officerProfile = null,
 }: PageShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isOfficerMobile = mobileShell === "officer";
@@ -47,8 +50,9 @@ export function PageShell({
         portalLabel={portalLabel}
         pageTitle={pageTitle}
         onMenuClick={() => setMobileOpen(true)}
-        showMobileSubtitle={isOfficerMobile}
+        showMobileSubtitle={isOfficerMobile && !officerProfile}
         officerMobile={isOfficerMobile}
+        officerProfile={officerProfile}
       />
 
       <div

@@ -1,6 +1,5 @@
 import { PortalLayout } from "@/components/layout/portal-layout";
 import { officerNavItems } from "@/components/layout/nav-config";
-import { OfficerWelcomeBanner } from "@/components/officer/officer-welcome-banner";
 import { getAuthProfile } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
@@ -16,13 +15,13 @@ export default async function OfficerLayout({ children }: { children: React.Reac
       portalLabel="Sales Officer Portal"
       navItems={officerNavItems}
       mobileShell="officer"
+      officerProfile={{
+        fullName: profile.fullName,
+        email: profile.email,
+        photoUrl: profile.photoUrl,
+        officerId: profile.officerId,
+      }}
     >
-      <OfficerWelcomeBanner
-        fullName={profile.fullName}
-        email={profile.email}
-        photoUrl={profile.photoUrl}
-        officerId={profile.officerId}
-      />
       {children}
     </PortalLayout>
   );

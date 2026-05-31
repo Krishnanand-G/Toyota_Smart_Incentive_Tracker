@@ -1,6 +1,10 @@
 "use client";
 
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import {
+  OfficerHeaderIdentity,
+  type OfficerHeaderProfile,
+} from "@/components/officer/officer-header-identity";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import Image from "next/image";
@@ -11,6 +15,7 @@ type BrandHeaderProps = {
   onMenuClick?: () => void;
   showMobileSubtitle?: boolean;
   officerMobile?: boolean;
+  officerProfile?: OfficerHeaderProfile | null;
 };
 
 export function BrandHeader({
@@ -19,39 +24,48 @@ export function BrandHeader({
   onMenuClick,
   showMobileSubtitle = false,
   officerMobile = false,
+  officerProfile = null,
 }: BrandHeaderProps) {
+  const showOfficerIdentity = Boolean(officerProfile);
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background">
-      {/* Mobile: single merged bar — menu | page title | sign out */}
+      {/* Mobile */}
       <div
         className={cn(
           "mx-auto flex max-w-[1400px] items-center justify-between gap-2 px-3 lg:hidden",
-          officerMobile ? "h-14" : "h-12",
+          officerMobile ? "min-h-14 py-2" : "h-12",
         )}
       >
         <button
           type="button"
           onClick={onMenuClick}
           className={cn(
-            "flex items-center justify-center rounded-lg text-accent-primary transition hover:bg-surface-hover",
+            "flex shrink-0 items-center justify-center rounded-lg text-accent-primary transition hover:bg-surface-hover",
             officerMobile ? "min-h-[44px] min-w-[44px]" : "rounded-md p-2",
           )}
           aria-label="Open navigation menu"
         >
           <Menu size={officerMobile ? 22 : 20} />
         </button>
-        <div className="min-w-0 flex-1 px-1 text-center">
-          <h1 className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
-            {pageTitle ?? portalLabel}
-          </h1>
-          {showMobileSubtitle ? (
-            <p className="truncate text-[11px] text-muted">{portalLabel}</p>
-          ) : null}
-        </div>
+
+        {showOfficerIdentity && officerProfile ? (
+          <OfficerHeaderIdentity {...officerProfile} compact className="min-w-0 flex-1 px-1" />
+        ) : (
+          <div className="min-w-0 flex-1 px-1 text-center">
+            <h1 className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
+              {pageTitle ?? portalLabel}
+            </h1>
+            {showMobileSubtitle ? (
+              <p className="truncate text-[11px] text-muted">{portalLabel}</p>
+            ) : null}
+          </div>
+        )}
+
         <SignOutButton compact />
       </div>
 
-      {/* Desktop: brand + portal label */}
+      {/* Desktop */}
       <div className="mx-auto hidden h-14 max-w-[1400px] items-center justify-between px-6 lg:flex">
         <div className="flex items-center gap-3">
           <Image
@@ -69,9 +83,13 @@ export function BrandHeader({
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-xs font-medium uppercase tracking-wider text-foreground">
-            {portalLabel}
-          </span>
+          {showOfficerIdentity && officerProfile ? (
+            <OfficerHeaderIdentity {...officerProfile} />
+          ) : (
+            <span className="text-xs font-medium uppercase tracking-wider text-foreground">
+              {portalLabel}
+            </span>
+          )}
           <SignOutButton compact className="inline-flex" />
         </div>
       </div>
