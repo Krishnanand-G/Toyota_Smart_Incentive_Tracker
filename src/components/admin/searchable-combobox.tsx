@@ -51,8 +51,9 @@ export function SearchableCombobox({
   }, []);
 
   function selectOption(option: string) {
-    onChange(option);
-    setQuery(option);
+    const next = value === option ? "" : option;
+    onChange(next);
+    setQuery(next);
     setOpen(false);
   }
 
@@ -78,8 +79,9 @@ export function SearchableCombobox({
       {open && !disabled && (filtered.length > 0 || loading) ? (
         <ul
           className={cn(
-            "absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10",
-            "bg-[rgba(20,20,22,0.98)] shadow-xl backdrop-blur-xl",
+            "absolute z-[60] mt-1 max-h-60 w-full overflow-y-auto rounded-md lg:max-h-48",
+            "border border-[var(--glass-border)] bg-[var(--glass-elevated)]",
+            "shadow-[var(--glass-shadow-elevated)] dark-scrollbar",
           )}
         >
           {loading ? (
@@ -89,7 +91,11 @@ export function SearchableCombobox({
               <li key={option}>
                 <button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-white/5"
+                  className={cn(
+                    "w-full px-3 py-2 text-left text-sm text-foreground transition",
+                    "hover:bg-[var(--glass-soft)]",
+                    value === option && "bg-[var(--glass-soft)] font-medium",
+                  )}
                   onClick={() => selectOption(option)}
                 >
                   {option}

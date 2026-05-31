@@ -1,7 +1,10 @@
 "use client";
 
+import { isLocalOfficerUpload, resolveOfficerPhotoUrl } from "@/lib/officer-photo";
 import { cn } from "@/lib/utils";
+import { User } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 type OfficerAvatarProps = {
   fullName: string | null;
@@ -13,17 +16,16 @@ type OfficerAvatarProps = {
 };
 
 const sizeClasses = {
-  sm: "h-11 w-11 text-sm",
-  md: "h-12 w-12 text-sm",
-  lg: "h-16 w-16 text-base",
+  sm: "h-11 w-11",
+  md: "h-12 w-12",
+  lg: "h-16 w-16",
 };
 
-function initials(name: string | null, email: string) {
-  const source = name?.trim() || email;
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return source.slice(0, 2).toUpperCase();
-}
+const iconSizes = {
+  sm: 20,
+  md: 22,
+  lg: 28,
+};
 
 export function OfficerAvatar({
   fullName,
@@ -33,18 +35,29 @@ export function OfficerAvatar({
   selected,
   className,
 }: OfficerAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const resolvedPhoto = resolveOfficerPhotoUrl(photoUrl);
+  const showPhoto = Boolean(resolvedPhoto) && !imageFailed;
   const sizeClass = sizeClasses[size];
 
-  if (photoUrl) {
+  if (showPhoto && resolvedPhoto) {
     return (
       <div
         className={cn(
-          "relative shrink-0 overflow-hidden rounded-xl border border-white/10",
+          "relative shrink-0 overflow-hidden rounded-md border border-border",
           sizeClass,
           className,
         )}
       >
-        <Image src={photoUrl} alt={fullName ?? email} fill className="object-cover" sizes="64px" />
+        <Image
+          src={resolvedPhoto}
+          alt={fullName ?? email}
+          fill
+          className="object-cover"
+          sizes="64px"
+          unoptimized={isLocalOfficerUpload(resolvedPhoto)}
+          onError={() => setImageFailed(true)}
+        />
       </div>
     );
   }
@@ -52,13 +65,16 @@ export function OfficerAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-xl font-bold",
+        "flex shrink-0 items-center justify-center rounded-md border",
         sizeClass,
-        selected ? "bg-orange-500/20 text-orange-300" : "bg-white/5 text-foreground",
+        selected
+          ? "border-red-200 bg-red-50 text-accent-primary"
+          : "border-border bg-surface-hover text-muted",
         className,
       )}
+      aria-label={fullName ?? email}
     >
-      {initials(fullName, email)}
+      <User size={iconSizes[size]} strokeWidth={1.75} />
     </div>
   );
 }

@@ -5,30 +5,20 @@ import { GlassBadge, GlassCard } from "@/components/glass";
 import { formatMonthDisplay } from "@/lib/date-picker-utils";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ChevronRight, Mail, TrendingUp } from "lucide-react";
+import { ChevronRight, TrendingUp } from "lucide-react";
 
-export type OfficerSummary = {
-  id: string;
-  email: string;
-  fullName: string | null;
-  officerId: string | null;
-  photoUrl: string | null;
-  totalSales: number;
-  thisMonthSales: number;
-  activeMonths: number;
-  latestMonth: string | null;
-};
+import type { OfficerSummary } from "@/lib/admin-types";
 
 type OfficerListItemProps = {
   officer: OfficerSummary;
   selected: boolean;
-  maxSales: number;
+  totalMonthSales: number;
   onSelect: (id: string) => void;
 };
 
-export function OfficerListItem({ officer, selected, maxSales, onSelect }: OfficerListItemProps) {
+export function OfficerListItem({ officer, selected, totalMonthSales, onSelect }: OfficerListItemProps) {
   const name = officer.fullName || "Unnamed sales officer";
-  const progress = maxSales > 0 ? (officer.totalSales / maxSales) * 100 : 0;
+  const progress = totalMonthSales > 0 ? (officer.thisMonthSales / totalMonthSales) * 100 : 0;
 
   return (
     <motion.button
@@ -39,60 +29,60 @@ export function OfficerListItem({ officer, selected, maxSales, onSelect }: Offic
     >
       <GlassCard
         className={cn(
-          "border p-4 transition",
+          "border p-3 transition lg:p-4",
           selected
-            ? "border-orange-500/50 bg-orange-500/[0.06] ring-1 ring-orange-500/30"
-            : "border-white/10 hover:border-white/20",
+            ? "border-red-200 bg-red-50 ring-1 ring-red-200"
+            : "border-border hover:border-accent-primary",
         )}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2.5 lg:items-start lg:gap-3">
           <OfficerAvatar
             fullName={officer.fullName}
             email={officer.email}
             photoUrl={officer.photoUrl}
+            size="sm"
             selected={selected}
           />
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-semibold text-foreground">{name}</p>
+                <p className="truncate text-sm font-semibold text-foreground lg:text-base">{name}</p>
                 {officer.officerId ? (
-                  <p className="mt-0.5 font-mono text-xs text-orange-400/90">{officer.officerId}</p>
+                  <p className="font-mono text-[10px] text-accent-primary lg:text-xs">{officer.officerId}</p>
                 ) : null}
-                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted">
-                  <Mail size={12} className="shrink-0" />
-                  {officer.email}
-                </p>
+                <p className="truncate text-[11px] text-muted lg:text-xs">{officer.email}</p>
               </div>
               <ChevronRight
                 size={16}
-                className={cn("mt-1 shrink-0 text-muted", selected && "text-orange-400")}
+                className={cn("shrink-0 text-muted", selected && "text-accent-primary")}
               />
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5 lg:mt-3 lg:gap-2">
               <GlassBadge variant={officer.totalSales > 0 ? "blue" : "default"}>
-                {officer.totalSales} total sales
+                {officer.totalSales} total
               </GlassBadge>
               {officer.thisMonthSales > 0 ? (
-                <GlassBadge variant="green">{officer.thisMonthSales} this month</GlassBadge>
+                <GlassBadge variant="green">{officer.thisMonthSales} this mo.</GlassBadge>
               ) : null}
             </div>
 
-            <div className="mt-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted">
+            <div className="mt-2 space-y-1 lg:mt-3 lg:space-y-1.5">
+              <div className="flex items-center justify-between gap-2 text-[10px] text-muted lg:text-xs">
                 <span className="flex items-center gap-1">
-                  <TrendingUp size={12} />
-                  {officer.activeMonths} active month{officer.activeMonths === 1 ? "" : "s"}
+                  <TrendingUp size={11} />
+                  {officer.activeMonths} mo.
                 </span>
-                <span>Latest: {officer.latestMonth ? formatMonthDisplay(officer.latestMonth) : "No activity"}</span>
+                <span className="truncate">
+                  {officer.latestMonth ? formatMonthDisplay(officer.latestMonth) : "No activity"}
+                </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+              <div className="h-1 overflow-hidden rounded-full bg-background-muted lg:h-1.5">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    selected ? "bg-orange-500" : "bg-white/20",
+                    selected ? "bg-accent-primary" : "bg-border",
                   )}
                   style={{ width: `${progress}%` }}
                 />

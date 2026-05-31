@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { chartColors, chartTooltipStyle } from "@/lib/chart-theme";
 import { formatChartDayLabel } from "@/lib/date-picker-utils";
 import {
   CartesianGrid,
@@ -12,7 +13,8 @@ import {
   YAxis,
 } from "recharts";
 
-export type TrendPoint = { date: string; cumulativeUnits: number; dailyUnits: number };
+import type { TrendPoint } from "@/lib/admin-dashboard-utils";
+import { useIsMobile } from "@/lib/use-is-mobile";
 
 type SalesTrendChartProps = {
   data: TrendPoint[];
@@ -20,46 +22,42 @@ type SalesTrendChartProps = {
 };
 
 export function SalesTrendChart({ data, label }: SalesTrendChartProps) {
+  const isMobile = useIsMobile();
   const hasSales = data.some((point) => point.dailyUnits > 0);
 
   return (
-    <GlassCard className="border border-white/10 p-4 sm:p-5">
-      <div className="mb-4">
+    <GlassCard className="p-3 sm:p-5">
+      <div className="mb-3 lg:mb-4">
         <h3 className="text-sm font-semibold text-foreground">Sales trend</h3>
         <p className="text-xs text-muted">Cumulative units — {label}</p>
       </div>
 
       {!hasSales ? (
-        <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-muted">
+        <div className="flex h-52 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted lg:h-56">
           No sales recorded in this period.
         </div>
       ) : (
-        <div className="h-56 w-full min-w-0">
+        <div className="h-52 w-full min-w-0 lg:h-56">
           <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
-            <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+            <LineChart data={data} margin={{ top: 8, right: 8, left: isMobile ? 4 : -16, bottom: 0 }}>
+              <CartesianGrid stroke={chartColors.grid} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickFormatter={formatChartDayLabel}
                 interval="preserveStartEnd"
-                tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
+                tick={{ fill: chartColors.axis, fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
+                tick={{ fill: chartColors.axis, fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ stroke: "rgba(249, 115, 22, 0.25)", strokeWidth: 1 }}
-                contentStyle={{
-                  background: "rgba(20,20,22,0.95)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                }}
+                cursor={{ stroke: chartColors.cursor, strokeWidth: 1 }}
+                contentStyle={chartTooltipStyle}
                 labelFormatter={(label) => formatChartDayLabel(String(label))}
                 formatter={(value, name) => [
                   `${value} units`,
@@ -69,10 +67,10 @@ export function SalesTrendChart({ data, label }: SalesTrendChartProps) {
               <Line
                 type="monotone"
                 dataKey="cumulativeUnits"
-                stroke="#f97316"
+                stroke={chartColors.primary}
                 strokeWidth={2.5}
                 dot={false}
-                activeDot={{ r: 5, fill: "#f97316" }}
+                activeDot={{ r: 5, fill: chartColors.primary }}
               />
             </LineChart>
           </ResponsiveContainer>

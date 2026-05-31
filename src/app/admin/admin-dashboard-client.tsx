@@ -97,18 +97,18 @@ export function AdminDashboardClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         badge="Studio"
         description="Analytics overview for sales performance and incentive liability."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden w-auto flex-row flex-wrap items-center gap-2 lg:flex">
             {rangeOptions.map((option) => (
               <GlassButton
                 key={option.value}
                 type="button"
                 variant={range === option.value ? "accent" : "secondary"}
-                className={cn("!px-3 !py-1.5 !text-xs")}
+                className="!px-3 !py-1.5 !text-xs"
                 onClick={() => setRange(option.value)}
               >
                 {option.label}
@@ -120,18 +120,36 @@ export function AdminDashboardClient({
         }
       />
 
+      <div className="flex flex-col gap-2 lg:hidden">
+        <div className="flex flex-row flex-wrap items-center gap-2">
+          {rangeOptions.map((option) => (
+            <GlassButton
+              key={option.value}
+              type="button"
+              variant={range === option.value ? "accent" : "secondary"}
+              className="!flex-1 !px-2 !py-1.5 !text-xs sm:!flex-none"
+              onClick={() => setRange(option.value)}
+            >
+              {option.label}
+            </GlassButton>
+          ))}
+          {refreshing ? <span className="text-xs text-muted">Updating…</span> : null}
+        </div>
+        <GlassMonthPicker value={monthKey} onChange={handleMonthChange} className="w-full" />
+      </div>
+
       {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
 
-      <div className={cn("space-y-6", refreshing && "opacity-80 transition-opacity")}>
+      <div className={cn("space-y-4 lg:space-y-6", refreshing && "opacity-80 transition-opacity")}>
         <AdminMetricStrip kpis={data.kpis} />
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <SalesTrendChart data={data.salesTrend} label={data.label} />
           <ModelBreakdownChart data={data.salesByModel} />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <OfficerLeaderboard data={data.officerLeaderboard} />
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+          <OfficerLeaderboard data={data.officerLeaderboard} totalUnits={data.kpis.totalSales} />
           <RecentActivityFeed data={data.recentActivity} />
         </div>
       </div>

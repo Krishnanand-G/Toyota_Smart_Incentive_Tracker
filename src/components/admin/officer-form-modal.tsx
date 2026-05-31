@@ -1,9 +1,10 @@
 "use client";
 
-import { GlassAlert, GlassButton, GlassCard, GlassInput, GlassModal } from "@/components/glass";
-import type { OfficerSummary } from "@/components/admin/officer-list-item";
-import { MASKED_PASSWORD } from "@/lib/password";
-import Image from "next/image";
+import { OfficerAvatar } from "@/components/admin/officer-avatar";
+import { GlassAlert, GlassButton, GlassInput, GlassModal } from "@/components/glass";
+import type { OfficerSummary } from "@/lib/admin-types";
+import { getApiErrorMessage, readJsonOrEmpty } from "@/lib/api-errors";
+import { resolveOfficerPhotoUrl } from "@/lib/officer-photo";
 import { useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 
@@ -18,61 +19,34 @@ type FormState = {
   fullName: string;
   email: string;
   officerId: string;
-  password: string;
-  newPassword: string;
-  confirmPassword: string;
   photoUrl: string;
-};
-
-type OfficerDetails = {
-  hasPassword: boolean;
-  authLinked: boolean;
-  authConfigured: boolean;
 };
 
 const emptyForm: FormState = {
   fullName: "",
   email: "",
   officerId: "",
-  password: "",
-  newPassword: "",
-  confirmPassword: "",
   photoUrl: "",
 };
 
 export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFormModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [details, setDetails] = useState<OfficerDetails | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setFormError(null);
-    setDetails(null);
 
     if (editing) {
       setForm({
         fullName: editing.fullName ?? "",
         email: editing.email,
         officerId: editing.officerId ?? "",
-        password: "",
-        newPassword: "",
-        confirmPassword: "",
-        photoUrl: editing.photoUrl ?? "",
+        photoUrl: resolveOfficerPhotoUrl(editing.photoUrl) ?? "",
       });
-
-      setLoadingDetails(true);
-      fetch(`/api/admin/officers/${editing.id}`)
-        .then(async (res) => {
-          if (!res.ok) throw new Error("Could not load officer details");
-          setDetails((await res.json()) as OfficerDetails);
-        })
-        .catch(() => setDetails(null))
-        .finally(() => setLoadingDetails(false));
     } else {
       setForm(emptyForm);
     }
@@ -85,9 +59,9 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
       const body = new FormData();
       body.append("file", file);
       const res = await fetch("/api/admin/officers/photo", { method: "POST", body });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Could not upload photo");
-      setForm((prev) => ({ ...prev, photoUrl: data.url }));
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: unknown };
+      if (!res.ok) throw new Error(getApiErrorMessage(data, "Could not upload photo"));
+      setForm((prev) => ({ ...prev, photoUrl: data.url ?? "" }));
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Could not upload photo");
     } finally {
@@ -100,40 +74,12 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
     setSubmitting(true);
     setFormError(null);
 
-    if (!editing && form.password.trim().length < 8) {
-      setFormError("Password must be at least 8 characters.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (editing && form.newPassword.trim()) {
-      if (form.newPassword.trim().length < 8) {
-        setFormError("New password must be at least 8 characters.");
-        setSubmitting(false);
-        return;
-      }
-      if (form.newPassword !== form.confirmPassword) {
-        setFormError("New password and confirmation do not match.");
-        setSubmitting(false);
-        return;
-      }
-    }
-
     const payload: Record<string, string | null> = {
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       officerId: form.officerId.trim(),
       photoUrl: form.photoUrl || null,
     };
-
-    if (editing) {
-      if (form.newPassword.trim()) {
-        payload.newPassword = form.newPassword;
-        payload.confirmPassword = form.confirmPassword;
-      }
-    } else {
-      payload.password = form.password;
-    }
 
     const endpoint = editing ? `/api/admin/officers/${editing.id}` : "/api/admin/officers";
     const method = editing ? "PATCH" : "POST";
@@ -144,19 +90,10 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await readJsonOrEmpty(res);
 
       if (!res.ok) {
-        const fieldErrors = data?.error?.fieldErrors as Record<string, string[] | undefined> | undefined;
-        const firstFieldError = fieldErrors
-          ? Object.values(fieldErrors).find((messages) => messages?.[0])?.[0]
-          : undefined;
-        const message =
-          data?.error?.formErrors?.[0] ??
-          firstFieldError ??
-          (typeof data?.error === "string" ? data.error : null) ??
-          "Could not save sales officer";
-        throw new Error(message);
+        throw new Error(getApiErrorMessage(data, "Could not save sales officer"));
       }
 
       onSaved();
@@ -167,12 +104,6 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
       setSubmitting(false);
     }
   }
-
-  const currentPasswordLabel = loadingDetails
-    ? "Loading..."
-    : details?.hasPassword
-      ? MASKED_PASSWORD
-      : "Not set";
 
   return (
     <GlassModal
@@ -213,56 +144,6 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
             />
           </div>
 
-          {editing ? (
-            <>
-              <div>
-                <label className="mb-1.5 block text-sm text-muted">Current password</label>
-                <GlassInput
-                  type="text"
-                  value={currentPasswordLabel}
-                  readOnly
-                  className="cursor-default text-muted"
-                />
-                <p className="mt-1 text-xs text-muted">
-                  {details?.hasPassword
-                    ? "Password is saved in the database and Supabase Auth. Enter a new password below to change it."
-                    : "No password on file yet. Set one below to enable login."}
-                  {!details?.authConfigured ? " Add SUPABASE_SERVICE_ROLE_KEY to sync login credentials." : null}
-                </p>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm text-muted">New password</label>
-                <GlassInput
-                  type="text"
-                  value={form.newPassword}
-                  onChange={(e) => setForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                  placeholder="Leave blank to keep current password"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm text-muted">Confirm new password</label>
-                <GlassInput
-                  type="text"
-                  value={form.confirmPassword}
-                  onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  placeholder="Re-enter new password"
-                />
-              </div>
-            </>
-          ) : (
-            <div>
-              <label className="mb-1.5 block text-sm text-muted">Password</label>
-              <GlassInput
-                type="text"
-                value={form.password}
-                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                placeholder="Minimum 8 characters"
-                required
-                minLength={8}
-              />
-            </div>
-          )}
-
           <div>
             <label className="mb-1.5 block text-sm text-muted">Profile photo</label>
             <input
@@ -286,7 +167,7 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
                 <Upload size={16} />
                 {uploading ? "Uploading..." : "Upload photo"}
               </GlassButton>
-              {form.photoUrl ? (
+              {resolveOfficerPhotoUrl(form.photoUrl) ? (
                 <button
                   type="button"
                   onClick={() => setForm((prev) => ({ ...prev, photoUrl: "" }))}
@@ -296,36 +177,37 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
                 </button>
               ) : null}
             </div>
-            {form.photoUrl ? (
-              <div className="relative mt-3 h-24 w-24 overflow-hidden rounded-xl border border-white/10">
-                <Image src={form.photoUrl} alt="Officer preview" fill className="object-cover" />
+            <div className="relative mt-3 inline-block">
+              <OfficerAvatar
+                fullName={form.fullName || editing?.fullName || null}
+                email={form.email || editing?.email || "officer@toyota.local"}
+                photoUrl={form.photoUrl}
+                size="lg"
+              />
+              {resolveOfficerPhotoUrl(form.photoUrl) ? (
                 <button
                   type="button"
                   onClick={() => setForm((prev) => ({ ...prev, photoUrl: "" }))}
-                  className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
+                  className="absolute -right-1 -top-1 rounded-full border border-border bg-surface-elevated p-1 text-muted transition hover:text-foreground"
                   aria-label="Remove photo"
                 >
                   <X size={12} />
                 </button>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
-
-          {!editing ? (
-            <GlassCard className="border border-white/10 bg-white/[0.02] p-3">
-              <p className="text-xs leading-relaxed text-muted">
-                Creates the profile in PostgreSQL and login credentials in Supabase Auth. Requires
-                SUPABASE_SERVICE_ROLE_KEY in your environment.
-              </p>
-            </GlassCard>
-          ) : null}
         </div>
 
-        <div className="mt-4 flex shrink-0 justify-end gap-2 border-t border-white/10 bg-[var(--glass-elevated)] pt-4">
-          <GlassButton type="button" variant="ghost" onClick={onClose}>
+        <div className="mt-4 flex shrink-0 flex-col-reverse gap-2 border-t border-border bg-surface-elevated pt-4 lg:flex-row lg:justify-end">
+          <GlassButton type="button" variant="ghost" className="w-full lg:w-auto" onClick={onClose}>
             Cancel
           </GlassButton>
-          <GlassButton type="submit" variant="accent" disabled={submitting || uploading || loadingDetails}>
+          <GlassButton
+            type="submit"
+            variant="accent"
+            className="w-full lg:w-auto"
+            disabled={submitting || uploading}
+          >
             {submitting ? "Saving..." : editing ? "Save changes" : "Add sales officer"}
           </GlassButton>
         </div>
