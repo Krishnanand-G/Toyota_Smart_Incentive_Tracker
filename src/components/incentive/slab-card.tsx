@@ -133,7 +133,7 @@ export function SlabCard({
             <GlassInput
               value={slab.label ?? ""}
               onChange={(e) => onChange(index, "label", e.target.value)}
-              placeholder="Standard"
+              placeholder="Foundation"
             />
           </label>
           <label className="block space-y-1">

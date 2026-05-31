@@ -223,10 +223,10 @@ async function main() {
   await prisma.incentiveSlab.deleteMany();
   await prisma.incentiveSlab.createMany({
     data: [
-      { minUnits: 0, maxUnits: 9, perUnitAmount: new Prisma.Decimal(1000), label: "Standard" },
-      { minUnits: 10, maxUnits: 19, perUnitAmount: new Prisma.Decimal(1400), label: "Target" },
-      { minUnits: 20, maxUnits: 29, perUnitAmount: new Prisma.Decimal(1800), label: "Stretch" },
-      { minUnits: 30, maxUnits: null, perUnitAmount: new Prisma.Decimal(2200), label: "Excellence" },
+      { minUnits: 0, maxUnits: 9, perUnitAmount: new Prisma.Decimal(1000), label: "Foundation" },
+      { minUnits: 10, maxUnits: 19, perUnitAmount: new Prisma.Decimal(1400), label: "Achiever" },
+      { minUnits: 20, maxUnits: 29, perUnitAmount: new Prisma.Decimal(1800), label: "Performer" },
+      { minUnits: 30, maxUnits: null, perUnitAmount: new Prisma.Decimal(2200), label: "Elite" },
     ],
   });
 
