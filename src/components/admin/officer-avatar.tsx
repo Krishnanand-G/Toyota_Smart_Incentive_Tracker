@@ -1,9 +1,11 @@
 "use client";
 
+import { ImageLightbox } from "@/components/glass/image-lightbox";
 import { isLocalOfficerUpload, resolveOfficerPhotoUrl } from "@/lib/officer-photo";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
 import Image from "next/image";
+import type { MouseEvent } from "react";
 import { useState } from "react";
 
 type OfficerAvatarProps = {
@@ -13,6 +15,8 @@ type OfficerAvatarProps = {
   size?: "sm" | "md" | "lg";
   selected?: boolean;
   className?: string;
+  /** Tap/click photo to open full-size preview. Default true. */
+  previewable?: boolean;
 };
 
 const sizeClasses = {
@@ -34,31 +38,64 @@ export function OfficerAvatar({
   size = "sm",
   selected,
   className,
+  previewable = true,
 }: OfficerAvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const resolvedPhoto = resolveOfficerPhotoUrl(photoUrl);
   const showPhoto = Boolean(resolvedPhoto) && !imageFailed;
   const sizeClass = sizeClasses[size];
+  const label = fullName ?? email;
+
+  function openPreview(event: MouseEvent) {
+    event.stopPropagation();
+    setPreviewOpen(true);
+  }
 
   if (showPhoto && resolvedPhoto) {
+    const image = (
+      <Image
+        src={resolvedPhoto}
+        alt={label}
+        fill
+        className="object-cover"
+        sizes="256px"
+        unoptimized={isLocalOfficerUpload(resolvedPhoto)}
+        onError={() => setImageFailed(true)}
+      />
+    );
+
+    const frameClass = cn(
+      "relative shrink-0 overflow-hidden rounded-md border border-border",
+      sizeClass,
+      previewable && "cursor-zoom-in transition hover:ring-2 hover:ring-accent-primary/30",
+      className,
+    );
+
     return (
-      <div
-        className={cn(
-          "relative shrink-0 overflow-hidden rounded-md border border-border",
-          sizeClass,
-          className,
+      <>
+        {previewable ? (
+          <button
+            type="button"
+            onClick={openPreview}
+            className={frameClass}
+            aria-label={`View full photo of ${label}`}
+          >
+            {image}
+          </button>
+        ) : (
+          <div className={frameClass}>{image}</div>
         )}
-      >
-        <Image
-          src={resolvedPhoto}
-          alt={fullName ?? email}
-          fill
-          className="object-cover"
-          sizes="64px"
-          unoptimized={isLocalOfficerUpload(resolvedPhoto)}
-          onError={() => setImageFailed(true)}
-        />
-      </div>
+        {previewable ? (
+          <ImageLightbox
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            src={resolvedPhoto}
+            alt={label}
+            caption={fullName}
+          />
+        ) : null}
+      </>
     );
   }
 
@@ -72,7 +109,7 @@ export function OfficerAvatar({
           : "border-border bg-surface-hover text-muted",
         className,
       )}
-      aria-label={fullName ?? email}
+      aria-label={label}
     >
       <User size={iconSizes[size]} strokeWidth={1.75} />
     </div>

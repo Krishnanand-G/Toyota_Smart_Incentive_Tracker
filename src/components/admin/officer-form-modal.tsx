@@ -187,7 +187,10 @@ export function OfficerFormModal({ open, editing, onClose, onSaved }: OfficerFor
               {resolveOfficerPhotoUrl(form.photoUrl) ? (
                 <button
                   type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, photoUrl: "" }))}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setForm((prev) => ({ ...prev, photoUrl: "" }));
+                  }}
                   className="absolute -right-1 -top-1 rounded-full border border-border bg-surface-elevated p-1 text-muted transition hover:text-foreground"
                   aria-label="Remove photo"
                 >
