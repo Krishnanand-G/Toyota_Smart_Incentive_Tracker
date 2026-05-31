@@ -35,6 +35,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# local personal notes (never commit)
+HOSTING_NOTES.txt
+LOCAL_IMPLEMENTATION_PLAN.txt
+
 # vercel
 .vercel
 
