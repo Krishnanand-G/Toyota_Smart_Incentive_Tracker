@@ -17,18 +17,23 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="space-y-2">
-        {badge ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <GlassBadge variant={badgeVariant}>{badge}</GlassBadge>
-            {description ? <p className="text-sm text-muted">{description}</p> : null}
-          </div>
+    <div className="mb-2 flex flex-col gap-2 pb-1 lg:mb-2 lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:pb-2">
+      <div className="min-w-0 flex-1 space-y-1.5 lg:space-y-2">
+        {badge ? <GlassBadge variant={badgeVariant}>{badge}</GlassBadge> : null}
+        {title ? (
+          <h1 className="text-lg font-semibold tracking-tight text-foreground lg:text-3xl">
+            {title}
+          </h1>
         ) : null}
-        {title ? <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1> : null}
-        {!badge && description ? <p className="text-sm text-muted">{description}</p> : null}
+        {description ? (
+          <p className="text-sm text-muted max-lg:line-clamp-2 lg:block">{description}</p>
+        ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto lg:shrink-0">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

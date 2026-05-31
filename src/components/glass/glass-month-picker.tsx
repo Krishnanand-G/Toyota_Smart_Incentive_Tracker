@@ -9,7 +9,11 @@ import {
 import { parseMonthKey } from "@/lib/sale-entry-utils";
 import { cn } from "@/lib/utils";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+const PANEL_WIDTH = 260;
+const PANEL_HEIGHT = 280;
 
 export type GlassMonthPickerProps = {
   value: string;
@@ -20,9 +24,35 @@ export type GlassMonthPickerProps = {
 
 export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthPickerProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
   const { year: selectedYear, month: selectedMonth } = parseMonthKey(value);
   const [viewYear, setViewYear] = useState(selectedYear);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const updateCoords = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.max(rect.width, PANEL_WIDTH);
+    let left = rect.right - width;
+    if (left < 8) left = 8;
+    if (left + width > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - width - 8);
+    }
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openAbove = spaceBelow < PANEL_HEIGHT && rect.top > PANEL_HEIGHT;
+    const top = openAbove ? rect.top - PANEL_HEIGHT - 8 : rect.bottom + 8;
+
+    setCoords({ top: Math.max(8, top), left, width });
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) setViewYear(selectedYear);
@@ -30,50 +60,60 @@ export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthP
 
   useEffect(() => {
     if (!open) return;
+
+    updateCoords();
+
     function onMouseDown(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || popoverRef.current?.contains(target)) {
+        return;
       }
+      setOpen(false);
     }
+
+    function onReposition() {
+      updateCoords();
+    }
+
     document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
+  }, [open, updateCoords]);
 
   function selectMonth(month: number) {
-    onChange(toMonthKey(viewYear, month));
+    const monthKey = toMonthKey(viewYear, month);
+    if (monthKey === value) {
+      setOpen(false);
+      return;
+    }
+    onChange(monthKey);
     setOpen(false);
   }
 
-  return (
-    <div ref={rootRef} className="relative inline-block">
-      <button
-        id={id}
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((prev) => !prev)}
+  const monthPanel =
+    mounted && open && coords ? (
+      <div
+        ref={popoverRef}
+        role="dialog"
+        aria-label="Choose month"
+        style={{ top: coords.top, left: coords.left, width: coords.width }}
         className={cn(
-          "glass-input inline-flex w-auto items-center gap-2 px-3 py-1.5 text-xs text-foreground transition",
-          open && "border-[rgba(249,115,22,0.5)] shadow-[0_0_0_3px_var(--focus-ring)]",
-          className,
+          "fixed z-[200] rounded-lg border border-[var(--glass-border)] bg-[var(--glass-elevated)] p-3",
+          "shadow-[var(--glass-shadow-elevated)]",
         )}
       >
-        <span>{formatMonthDisplay(value)}</span>
-        <Calendar size={14} className="shrink-0 text-muted" aria-hidden />
-      </button>
-
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="Choose month"
-          className="absolute right-0 top-full z-50 mt-2 w-[260px] border border-white/10 bg-[var(--glass-elevated)] p-3 shadow-[var(--glass-shadow-elevated)]"
-        >
-          <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+          <div className="mb-3 flex items-center justify-between border-b border-[var(--glass-border)] pb-2">
             <button
               type="button"
               aria-label="Previous year"
               onClick={() => setViewYear((y: number) => y - 1)}
-              className="inline-flex h-8 w-8 items-center justify-center text-muted transition hover:bg-white/5 hover:text-foreground"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted transition hover:bg-[var(--glass-soft)] hover:text-foreground"
             >
               <ChevronLeft size={16} />
             </button>
@@ -82,7 +122,7 @@ export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthP
               type="button"
               aria-label="Next year"
               onClick={() => setViewYear((y: number) => y + 1)}
-              className="inline-flex h-8 w-8 items-center justify-center text-muted transition hover:bg-white/5 hover:text-foreground"
+              className="inline-flex h-8 w-8 items-center justify-center text-muted transition hover:bg-[var(--glass-soft)] hover:text-foreground"
             >
               <ChevronRight size={16} />
             </button>
@@ -100,8 +140,8 @@ export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthP
                   className={cn(
                     "px-2 py-2 text-sm transition",
                     isSelected
-                      ? "bg-accent-blue font-semibold text-black"
-                      : "text-foreground hover:bg-white/5",
+                      ? "bg-accent-primary font-semibold text-white"
+                      : "text-foreground hover:bg-[var(--glass-soft)]",
                   )}
                 >
                   {label}
@@ -110,7 +150,7 @@ export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthP
             })}
           </div>
 
-          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
+          <div className="mt-3 flex items-center justify-between border-t border-[var(--glass-border)] pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -124,13 +164,36 @@ export function GlassMonthPicker({ value, onChange, className, id }: GlassMonthP
                 onChange(currentMonthKey());
                 setOpen(false);
               }}
-              className="text-xs font-medium text-accent-blue transition hover:opacity-80"
+              className="text-xs font-medium text-accent-primary transition hover:opacity-80"
             >
               This month
             </button>
           </div>
         </div>
-      ) : null}
-    </div>
+    ) : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        id={id}
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => {
+          if (!open) updateCoords();
+          setOpen((prev) => !prev);
+        }}
+        className={cn(
+          "glass-input inline-flex w-auto items-center gap-2 rounded-md px-3 py-1.5 text-xs text-foreground transition",
+          open && "border-accent-primary shadow-[0_0_0_3px_var(--focus-ring)]",
+          className,
+        )}
+      >
+        <span>{formatMonthDisplay(value)}</span>
+        <Calendar size={14} className="shrink-0 text-muted" aria-hidden />
+      </button>
+      {monthPanel ? createPortal(monthPanel, document.body) : null}
+    </>
   );
 }

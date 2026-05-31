@@ -44,7 +44,7 @@ export function ConfirmDialog({
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
         onClick={onCancel}
       />
       <GlassCard variant="elevated" className="relative z-10 w-full max-w-md space-y-4 p-6" role="alertdialog">

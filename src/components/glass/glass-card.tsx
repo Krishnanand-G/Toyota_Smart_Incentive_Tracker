@@ -8,8 +8,8 @@ export type GlassCardProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 const variantClasses: Record<GlassCardVariant, string> = {
-  base: "glass-base rounded-glass",
-  elevated: "glass-elevated rounded-glass",
+  base: "glass-base rounded-lg",
+  elevated: "glass-elevated rounded-lg",
   pill: "glass-pill rounded-full",
 };
 

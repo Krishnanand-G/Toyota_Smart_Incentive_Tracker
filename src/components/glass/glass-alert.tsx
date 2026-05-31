@@ -8,15 +8,15 @@ export type GlassAlertProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 const variantClasses: Record<GlassAlertVariant, string> = {
-  error: "border-red-500/30 bg-red-500/10 text-red-400",
-  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  info: "border-orange-500/30 bg-orange-500/10 text-orange-400",
+  error: "border-red-200 bg-red-50 text-red-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  info: "border-red-200 bg-red-50 text-accent-primary",
 };
 
 export function GlassAlert({ variant = "error", className, ...props }: GlassAlertProps) {
   return (
     <div
-      className={cn("rounded-xl border px-3 py-2 text-sm", variantClasses[variant], className)}
+      className={cn("rounded-md border px-3 py-2 text-sm", variantClasses[variant], className)}
       role="alert"
       {...props}
     />

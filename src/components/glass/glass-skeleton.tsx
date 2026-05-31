@@ -6,7 +6,7 @@ export type GlassSkeletonProps = HTMLAttributes<HTMLDivElement>;
 export function GlassSkeleton({ className, ...props }: GlassSkeletonProps) {
   return (
     <div
-      className={cn("animate-pulse rounded-xl bg-white/5", className)}
+      className={cn("animate-pulse rounded-md bg-background-muted", className)}
       aria-hidden
       {...props}
     />
