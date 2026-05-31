@@ -49,31 +49,60 @@ A web app where **admins** configure Toyota car models and incentive payout slab
 
 ## Screenshots
 
-Add PNG/JPG files under `docs/screenshots/` and they will show up here.
+Ten screens from the live app (`docs/screenshots/`). Click any image on GitHub to open full size.
 
-| # | File name (suggested) | What to capture |
-|---|---|---|
-| 1 | `01-home-portal.png` | Home page — Admin vs Officer portal choice |
-| 2 | `02-admin-login.png` | Admin login page |
-| 3 | `03-admin-dashboard.png` | Admin dashboard with metrics / charts |
-| 4 | `04-admin-cars.png` | Car inventory — add/edit car models |
-| 5 | `05-admin-slabs.png` | **Important** — Dynamic slab panel with tier ranges and ₹/unit |
-| 6 | `06-admin-officers.png` | Sales officer management list |
-| 7 | `07-officer-login.png` | Officer login page |
-| 8 | `08-officer-dashboard.png` | **Important** — Officer dashboard: tier, payout, chart, tier ladder |
-| 9 | `09-officer-log-sale.png` | **Important** — Logging a sale (car picker + date) |
-| 10 | `10-officer-history.png` | Monthly history expanded with individual sales |
-| 11 | `11-mobile-officer.png` | Same officer screen on **phone width** (proves responsive UI) |
-
-### Preview (replace paths after you add files)
-
-![Home portal](./docs/screenshots/01-home-portal.png)
-![Admin slab panel](./docs/screenshots/05-admin-slabs.png)
-![Officer dashboard](./docs/screenshots/08-officer-dashboard.png)
-![Log sale](./docs/screenshots/09-officer-log-sale.png)
-![Mobile view](./docs/screenshots/11-mobile-officer.png)
-
-**Tip:** Use your **production URL** (`toyota-smart-incentive-tracker.vercel.app`), not preview deploy links. Hide demo passwords in screenshots if you can.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="./docs/screenshots/01-home-portal.png" width="100%" alt="Home portal" />
+      <br /><sub><b>1.</b> Home — portal selection</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="./docs/screenshots/02-admin-login.png" width="100%" alt="Admin login" />
+      <br /><sub><b>2.</b> Admin login</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="./docs/screenshots/03-admin-dashboard.png" width="100%" alt="Admin dashboard" />
+      <br /><sub><b>3.</b> Admin dashboard</sub>
+    </td>
+    <td valign="top">
+      <img src="./docs/screenshots/04-admin-cars.png" width="100%" alt="Admin cars" />
+      <br /><sub><b>4.</b> Car inventory</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="./docs/screenshots/05-admin-slabs.png" width="100%" alt="Admin slabs" />
+      <br /><sub><b>5.</b> Dynamic slab panel</sub>
+    </td>
+    <td valign="top">
+      <img src="./docs/screenshots/06-admin-officers.png" width="100%" alt="Admin officers" />
+      <br /><sub><b>6.</b> Sales officer management</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="./docs/screenshots/07-officer-login.png" width="100%" alt="Officer login" />
+      <br /><sub><b>7.</b> Officer login</sub>
+    </td>
+    <td valign="top">
+      <img src="./docs/screenshots/08-officer-dashboard.png" width="100%" alt="Officer dashboard" />
+      <br /><sub><b>8.</b> Officer dashboard — tier & payout</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="./docs/screenshots/09-officer-log-sale.png" width="100%" alt="Log sale" />
+      <br /><sub><b>9.</b> Log a sale</sub>
+    </td>
+    <td valign="top">
+      <img src="./docs/screenshots/10-officer-history.png" width="100%" alt="Officer history" />
+      <br /><sub><b>10.</b> Monthly history</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
