@@ -1,7 +1,6 @@
 "use client";
 
 import { GlassAlert, GlassButton, GlassCard, GlassInput } from "@/components/glass";
-import { createClient } from "@/lib/supabase/browser";
 import { motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, LogIn } from "lucide-react";
 import Link from "next/link";
@@ -41,26 +40,26 @@ export function RoleLoginForm({
       const formData = new FormData(event.currentTarget);
       const email = String(formData.get("email") ?? "");
       const password = String(formData.get("password") ?? "");
-      const supabase = createClient();
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        throw signInError;
+      const loginResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        cache: "no-store",
+        body: JSON.stringify({ email, password, expectedRole }),
+      });
+
+      const loginBody = (await loginResponse.json().catch(() => null)) as {
+        error?: string;
+        hint?: string;
+        redirectPath?: string;
+      } | null;
+
+      if (!loginResponse.ok) {
+        throw new Error(loginBody?.hint ?? loginBody?.error ?? "Login failed. Please try again.");
       }
 
-      const profileResponse = await fetch("/api/me", { credentials: "include" });
-      if (!profileResponse.ok) {
-        await supabase.auth.signOut();
-        throw new Error("Unable to load user profile after sign-in.");
-      }
-
-      const profile = (await profileResponse.json()) as { role: ExpectedRole };
-      if (profile.role !== expectedRole) {
-        await supabase.auth.signOut();
-        throw new Error(`This account is not a ${roleLabel.toLowerCase()}. Use the correct portal to sign in.`);
-      }
-
-      window.location.assign(redirectPath);
+      window.location.assign(loginBody?.redirectPath ?? redirectPath);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed. Please try again.";
       setError(message);
