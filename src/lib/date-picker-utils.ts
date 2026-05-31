@@ -37,6 +37,12 @@ export function formatMonthDisplay(monthKey: string) {
   return `${pad2(month)}/${year}`;
 }
 
+/** e.g. May 2026 — readable month headers on mobile */
+export function formatMonthDisplayLong(monthKey: string) {
+  const { year, month } = parseMonthKey(monthKey);
+  return `${MONTH_LABELS[month - 1]} ${year}`;
+}
+
 /** DD/MM/YYYY from an internal YYYY-MM-DD date key */
 export function formatDateDisplay(dateKey: string) {
   const { year, month, day } = parseDateKey(dateKey);
@@ -95,10 +101,10 @@ export function isDateInRange(dateKey: string, min?: string, max?: string) {
 
 export function currentMonthKey() {
   const date = new Date();
-  return toMonthKey(date.getFullYear(), date.getMonth() + 1);
+  return toMonthKey(date.getUTCFullYear(), date.getUTCMonth() + 1);
 }
 
 export function currentDateKey() {
   const date = new Date();
-  return toDateKey(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  return toDateKey(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
