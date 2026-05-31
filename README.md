@@ -108,16 +108,10 @@ Ten screens from the live app (`docs/screenshots/`). Click any image on GitHub t
 
 ## Demo login (live site)
 
-Create matching users in **Supabase Auth** and the app database (see setup below).
-
-| Role | URL | Email (seed default) |
-|---|---|---|
-| Admin | `/login/admin` | `admin@toyota.local` |
-| Officer | `/login/officer` | `officer@toyota.local` or `krishnanand.g@toyota.local` |
-
-Password = whatever you set in Supabase Auth when creating the user.
-
-On the live site, demo hints show if `NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS=true` is set on Vercel.
+| Role | URL | Email | Password |
+|---|---|---|---|
+| Admin | `/login/admin` | `admin@toyota.local` | `admin123` |
+| Officer | `/login/officer` | `officer@toyota.local` | `officer123` |
 
 ---
 
