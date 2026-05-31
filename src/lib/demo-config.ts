@@ -4,11 +4,14 @@ export type DemoCredentials = {
 };
 
 export function getDemoCredentials(role: "ADMIN" | "OFFICER"): DemoCredentials | null {
-  if (process.env.NODE_ENV === "production") {
+  const showFlag = process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS;
+
+  // Hidden on Vercel/production by default (security). Opt in with =true for class demos.
+  if (process.env.NODE_ENV === "production" && showFlag !== "true") {
     return null;
   }
 
-  if (process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === "false") {
+  if (showFlag === "false") {
     return null;
   }
 
