@@ -18,19 +18,21 @@ export function TierUnitRange({
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center gap-px font-mono tabular-nums leading-none text-muted",
+        "inline-flex items-center gap-px font-mono tabular-nums leading-none text-muted",
         textSize,
         className,
       )}
     >
-      <span>{minUnits}</span>
-      <span aria-hidden="true">–</span>
+      <span className="leading-none">{minUnits}</span>
+      <span aria-hidden="true" className="leading-none">
+        –
+      </span>
       {maxUnits === null ? (
-        <span className="inline-flex h-[1em] translate-y-px items-center font-sans text-[1.1em] leading-none">
+        <span className="inline-block align-middle leading-[1]" aria-label="no maximum">
           ∞
         </span>
       ) : (
-        <span>{maxUnits}</span>
+        <span className="leading-none">{maxUnits}</span>
       )}
     </span>
   );

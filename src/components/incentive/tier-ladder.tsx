@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/glass";
+import { TierUnitRange } from "@/components/incentive/tier-unit-range";
 import type { SlabShape } from "@/lib/incentive-types";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -10,11 +11,6 @@ export type TierLadderProps = {
   totalUnits: number;
   bare?: boolean;
 };
-
-function formatRange(slab: SlabShape) {
-  const max = slab.maxUnits === null ? "∞" : slab.maxUnits;
-  return `${slab.minUnits}–${max} units`;
-}
 
 function isSlabActive(slab: SlabShape, totalUnits: number) {
   return totalUnits >= slab.minUnits && (slab.maxUnits === null || totalUnits <= slab.maxUnits);
@@ -54,7 +50,10 @@ export function TierLadder({ slabs, totalUnits, bare = false }: TierLadderProps)
                   >
                     {label}
                   </p>
-                  <p className="font-mono text-xs text-muted">{formatRange(slab)}</p>
+                  <p className="inline-flex flex-wrap items-center gap-x-1 font-mono text-xs text-muted">
+                    <TierUnitRange minUnits={slab.minUnits} maxUnits={slab.maxUnits} size="sm" />
+                    <span>units</span>
+                  </p>
                 </div>
                 <p
                   className={cn(
