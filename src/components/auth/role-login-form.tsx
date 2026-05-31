@@ -14,8 +14,8 @@ type RoleLoginFormProps = {
   title: string;
   subtitle: string;
   redirectPath: string;
-  demoEmail: string;
-  demoPassword: string;
+  demoEmail?: string;
+  demoPassword?: string;
   roleLabel: string;
 };
 
@@ -70,36 +70,31 @@ export function RoleLoginForm({
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="ambient-blob -left-20 top-10 h-72 w-72 bg-orange-500/8" />
-        <div className="ambient-blob right-0 top-20 h-80 w-80 bg-white/[0.02]" />
-      </div>
-
+    <main className="relative flex min-h-screen items-center justify-center bg-background-muted px-4 py-6 max-lg:py-8 sm:py-12">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: 0.3 }}
         className="w-full max-w-md"
       >
         <Link
           href="/"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-foreground"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-accent-primary"
         >
           <ArrowLeft size={16} />
           Back to portal selection
         </Link>
 
-        <GlassCard variant="elevated" className="w-full p-8 sm:p-9">
+        <GlassCard variant="elevated" className="w-full p-6 sm:p-9 max-lg:p-7">
           <div className="mb-8">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">{roleLabel} sign in</p>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">{roleLabel} sign in</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
             <p className="mt-2 text-sm text-muted">{subtitle}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm text-muted">
+              <label htmlFor="email" className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted">
                 Email
               </label>
               <GlassInput
@@ -108,12 +103,13 @@ export function RoleLoginForm({
                 type="email"
                 required
                 defaultValue={demoEmail}
-                placeholder={demoEmail}
+                placeholder={demoEmail ?? "you@example.com"}
+                className="min-h-[44px]"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm text-muted">
+              <label htmlFor="password" className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted">
                 Password
               </label>
               <div className="relative">
@@ -123,13 +119,13 @@ export function RoleLoginForm({
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="Enter your password"
-                  className="pr-11"
+                  className="min-h-[44px] pr-11"
                 />
                 <button
                   type="button"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted transition hover:text-foreground"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted transition hover:text-foreground"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -138,17 +134,24 @@ export function RoleLoginForm({
 
             {error ? <GlassAlert variant="error">{error}</GlassAlert> : null}
 
-            <GlassButton type="submit" variant="primary" disabled={isSubmitting} className="w-full">
+            <GlassButton
+              type="submit"
+              variant="accent"
+              disabled={isSubmitting}
+              className="officer-touch w-full !min-h-[48px]"
+            >
               {isSubmitting ? <LoaderCircle size={18} className="animate-spin" /> : <LogIn size={18} />}
               {isSubmitting ? "Signing in..." : "Sign in"}
             </GlassButton>
 
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5 text-center text-xs text-muted">
-              <p className="font-medium text-foreground/80">Demo credentials</p>
-              <p className="mt-1 font-mono">
-                {demoEmail} / {demoPassword}
-              </p>
-            </div>
+            {demoEmail && demoPassword ? (
+              <div className="rounded-md border border-border bg-surface-row px-3 py-2.5 text-center text-xs text-muted">
+                <p className="font-medium text-foreground">Demo credentials</p>
+                <p className="mt-1 break-all text-center font-mono">
+                  {demoEmail} / {demoPassword}
+                </p>
+              </div>
+            ) : null}
           </form>
         </GlassCard>
       </motion.div>
