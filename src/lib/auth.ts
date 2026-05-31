@@ -9,8 +9,21 @@ export type AuthProfile = {
   authId: string;
   email: string;
   fullName: string | null;
+  officerId: string | null;
+  photoUrl: string | null;
   role: Role;
 };
+
+const profileSelect = {
+  id: true,
+  authId: true,
+  email: true,
+  fullName: true,
+  officerId: true,
+  photoUrl: true,
+  role: true,
+  isActive: true,
+} as const;
 
 export const getAuthProfile = cache(async () => {
   const supabase = await createClient();
@@ -23,14 +36,7 @@ export const getAuthProfile = cache(async () => {
 
   let profile = await prisma.user.findUnique({
     where: { authId: user.id },
-    select: {
-      id: true,
-      authId: true,
-      email: true,
-      fullName: true,
-      role: true,
-      isActive: true,
-    },
+    select: profileSelect,
   });
 
   if (profile) {
@@ -43,14 +49,7 @@ export const getAuthProfile = cache(async () => {
 
   profile = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: {
-      id: true,
-      authId: true,
-      email: true,
-      fullName: true,
-      role: true,
-      isActive: true,
-    },
+    select: profileSelect,
   });
 
   if (!profile || !profile.isActive) return null;
@@ -58,14 +57,7 @@ export const getAuthProfile = cache(async () => {
   const linked = await prisma.user.update({
     where: { id: profile.id },
     data: { authId: user.id },
-    select: {
-      id: true,
-      authId: true,
-      email: true,
-      fullName: true,
-      role: true,
-      isActive: true,
-    },
+    select: profileSelect,
   });
 
   if (!linked.isActive) return null;
